@@ -22,7 +22,7 @@ fi
 
 # Se o primeiro argumento é -R (remoção), repassa pro xbps-remove real
 # Ex: xbps-install -R vim
-if [[ "$1" == "-R" ]]; then
+if [[ "$1" == "-Rr" ]]; then
   exec "$REAL_REMOVE" "$@"
 fi
 
@@ -30,13 +30,6 @@ if [[ "$1" == "-Ss" ]]; then
   shift
   exec "$REAL_QUERY" -SsR "$@"
 fi
-
-# Se o comando contém "-R" em qualquer posição, também repassa pra remove
-for arg in "$@"; do
-  if [[ "$arg" == "-R" ]]; then
-    exec "$REAL_REMOVE" "$@"
-  fi
-done
 
 # Caso contrário, usa o xbps-install real
 exec "$REAL_INSTALL" "$@"
