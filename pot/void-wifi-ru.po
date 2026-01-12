@@ -1,0 +1,103 @@
+# Russian translations for PACKAGE package.
+# Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-11 21:12-0400\n"
+"PO-Revision-Date: 2026-01-11 21:12-0400\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: void-wifi:88
+msgid "Interrompido! Saindo..."
+msgstr "Прервано! Уход..."
+
+#: void-wifi:120
+msgid "Removendo arquivos temporários..."
+msgstr "Удаление временных файлов..."
+
+#: void-wifi:127
+msgid "Ajustando"
+msgstr "Регулировка"
+
+#: void-wifi:168
+msgid "erro: você não pode executar esta operação a menos que seja root."
+msgstr "ошибка: вы не сможете выполнить эту операцию, если вы не являетесь пользователем root."
+
+#: void-wifi:182 void-wifi:185
+msgid "IMPOSSÍVEL CONTINUAR"
+msgstr "НЕВОЗМОЖНО ПРОДОЛЖАТЬ"
+
+#: void-wifi:183
+msgid "Este script precisa dos comandos listados acima"
+msgstr "Этот скрипт нуждается в командах, перечисленных выше."
+
+#: void-wifi:184
+msgid "Instale-os e/ou verifique se eles estão em seu"
+msgstr "Instale-os e/ou verifique se eles estão em seu"
+
+#: void-wifi:189
+msgid "Instalar commando(s)"
+msgstr "Команда установки"
+
+#: void-wifi:191
+msgid "INFO: Execute o aplicativo novamente"
+msgstr "ИНФОРМАЦИЯ: Запустите приложение еще раз."
+
+#: void-wifi:193
+msgid "ERRO ao instalar comandos. Tente manualmente."
+msgstr "ОШИБКА при установке команд. Попробуйте вручную."
+
+#: void-wifi:242
+msgid "Instalando pacote"
+msgstr "Установка пакета"
+
+#: void-wifi:243
+msgid "Ativando serviço"
+msgstr "Активация услуги"
+
+#: void-wifi:244
+msgid "Reiniciando serviço"
+msgstr "Перезапуск службы"
+
+#: void-wifi:257
+msgid "Verificando redes wifi"
+msgstr "Проверка сетей Wi-Fi"
+
+#: void-wifi:260
+msgid "A varredura não retornou nenhum resultado."
+msgstr "Сканирование не дало результатов."
+
+#: void-wifi:261
+msgid "Aparentemente, o serviço wpa_supplicant não está em execução."
+msgstr "Судя по всему, служба wpa_supplicant не запущена."
+
+#: void-wifi:263
+msgid "Tente o seguinte"
+msgstr "Попробуйте следующее"
+
+#: void-wifi:264
+msgid "1-Use a opção Serviços no menu para ativar."
+msgstr "1-Используйте опцию «Сервисы» в меню для активации."
+
+#: void-wifi:265
+msgid "2-Verifique se existe um dispositivo wifi conectado à máquina."
+msgstr "2-Проверьте, подключено ли к машине Wi-Fi-устройство."
+
+#: void-wifi:309
+msgid "=== REDE WI-FI ==="
+msgstr "=== РЕДЕ WI-FI =="
+
+#: void-wifi:329
+msgid "Configurações feitas. Prosseguindo com a instalação."
+msgstr "Настройки сделаны. Приступаем к установке."

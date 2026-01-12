@@ -1,0 +1,102 @@
+# English translations for PACKAGE package.
+# Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-11 21:12-0400\n"
+"PO-Revision-Date: 2026-01-11 21:12-0400\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: void-wifi:88
+msgid "Interrompido! Saindo..."
+msgstr "Interrupted! Leaving..."
+
+#: void-wifi:120
+msgid "Removendo arquivos temporários..."
+msgstr "Removing temporary files..."
+
+#: void-wifi:127
+msgid "Ajustando"
+msgstr "Adjusting"
+
+#: void-wifi:168
+msgid "erro: você não pode executar esta operação a menos que seja root."
+msgstr "error: you cannot perform this operation unless you are root."
+
+#: void-wifi:182 void-wifi:185
+msgid "IMPOSSÍVEL CONTINUAR"
+msgstr "IMPOSSIBLE TO CONTINUE"
+
+#: void-wifi:183
+msgid "Este script precisa dos comandos listados acima"
+msgstr "This script needs the commands listed above"
+
+#: void-wifi:184
+msgid "Instale-os e/ou verifique se eles estão em seu"
+msgstr "Install them and/or make sure they are on your"
+
+#: void-wifi:189
+msgid "Instalar commando(s)"
+msgstr "Install command(s)"
+
+#: void-wifi:191
+msgid "INFO: Execute o aplicativo novamente"
+msgstr "INFO: Run the application again"
+
+#: void-wifi:193
+msgid "ERRO ao instalar comandos. Tente manualmente."
+msgstr "ERROR when installing commands. Try manually."
+
+#: void-wifi:242
+msgid "Instalando pacote"
+msgstr "Installing package"
+
+#: void-wifi:243
+msgid "Ativando serviço"
+msgstr "Activating service"
+
+#: void-wifi:244
+msgid "Reiniciando serviço"
+msgstr "Restarting service"
+
+#: void-wifi:257
+msgid "Verificando redes wifi"
+msgstr "Checking wifi networks"
+
+#: void-wifi:260
+msgid "A varredura não retornou nenhum resultado."
+msgstr "The scan returned no results."
+
+#: void-wifi:261
+msgid "Aparentemente, o serviço wpa_supplicant não está em execução."
+msgstr "Apparently the wpa_supplicant service is not running."
+
+#: void-wifi:263
+msgid "Tente o seguinte"
+msgstr "Try the following"
+
+#: void-wifi:264
+msgid "1-Use a opção Serviços no menu para ativar."
+msgstr "1-Use the Services option in the menu to activate."
+
+#: void-wifi:265
+msgid "2-Verifique se existe um dispositivo wifi conectado à máquina."
+msgstr "2-Check if there is a WiFi device connected to the machine."
+
+#: void-wifi:309
+msgid "=== REDE WI-FI ==="
+msgstr "=== REDE WI-FI =="
+
+#: void-wifi:329
+msgid "Configurações feitas. Prosseguindo com a instalação."
+msgstr "Settings done. Proceeding with the installation."
