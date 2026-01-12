@@ -4,6 +4,7 @@
 #  void-wifi
 #  Created: 2023/01/16
 #  Altered: 2024/03/08
+#  Updated: dom 11 jan 2026 21:11:33 -04
 #
 #  Copyright (c) 2023-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -84,7 +85,7 @@ RED="\Z1"
 BOLD="\Zb"
 RESET="\Zn"
 LABEL="Use the ${RED}UP ${RESET}and ${RED}DOWN ${RESET}keys to navigate.\nUse ${RED}TAB ${RESET}to toggle between buttons and ${RED}ENTER ${RESET}to select."
-declare Interrupted="$(gettext "Interrompido! Saindo...")"
+declare Interrupted="$(gettext 'Interrompido! Saindo...')"
 trap 'printf "\n${red}$Interrupted\n"; cleanup; exit 0' INT TERM HUP
 
 fmt() {
@@ -116,14 +117,14 @@ info_msg() {
 }
 
 cleanup() {
-	info_msg "$(gettext "Removendo arquivos temporários...")"
+	info_msg "$(gettext 'Removendo arquivos temporários...')"
 	rm -fv "$BOOTLOG"
 	info_msg "exit 1"
 	exit 1
 }
 
 sh_update_wpa_suplicant() {
-	msg "INFO" "$(gettext "Ajustando") wpa_supplicant.conf"
+	msg "INFO" "$(gettext 'Ajustando') wpa_supplicant.conf"
 	[[ ! -e /etc/wpa_supplicant/wpa_supplicant.conf ]] && >|/etc/wpa_supplicant/wpa_supplicant.conf
 	if [[ -f /etc/wpa_supplicant/wpa_supplicant.conf ]]; then
 		cat >"/etc/wpa_supplicant/wpa_supplicant.conf" <<EOF
@@ -164,7 +165,7 @@ sh_setascii_lines() {
 
 sh_checkroot() {
 	if [ "$(id -u)" != "0" ]; then
-		die "${red}$(gettext "erro: você não pode executar esta operação a menos que seja root.")"
+		die "${red}$(gettext 'erro: você não pode executar esta operação a menos que seja root.')"
 	fi
 }
 
@@ -178,18 +179,18 @@ sh_checkDependencies() {
 	done
 
 	if ((errorFound)); then
-		echo "${yellow}---------------$(gettext "IMPOSSÍVEL CONTINUAR")-------------${reset}"
-		echo "$(gettext "Este script precisa dos comandos listados acima")"
-		echo "$(gettext "Instale-os e/ou verifique se eles estão em seu") ${red}\$PATH${reset}"
-		echo "${yellow}---------------$(gettext "IMPOSSÍVEL CONTINUAR")-------------${reset}"
+		echo "${yellow}---------------$(gettext 'IMPOSSÍVEL CONTINUAR')-------------${reset}"
+		echo "$(gettext 'Este script precisa dos comandos listados acima')"
+		echo "$(gettext 'Instale-os e/ou verifique se eles estão em seu') ${red}\$PATH${reset}"
+		echo "${yellow}---------------$(gettext 'IMPOSSÍVEL CONTINUAR')-------------${reset}"
 
 		if [[ "$distro" != @(void|void-live|voidlinux) ]]; then
 			echo
-			if readconf "${yellow}$(gettext "Instalar commando(s)") '${cyan}${missing[*]}${reset}' ?"; then
+			if readconf "${yellow}$(gettext 'Instalar commando(s)') '${cyan}${missing[*]}${reset}' ?"; then
 				if xbps-install -S "${missing[@]}"; then
-					die "$(gettext "INFO: Execute o aplicativo novamente")"
+					die "$(gettext 'INFO: Execute o aplicativo novamente')"
 				else
-					die "$(gettext "ERRO ao instalar comandos. Tente manualmente.")"
+					die "$(gettext 'ERRO ao instalar comandos. Tente manualmente.')"
 				fi
 			fi
 		fi
@@ -238,9 +239,9 @@ sh_mkservices() {
 	local service
 
 	for service in "${aServices[@]}"; do
-		sh_cmd_job "$(gettext "Instalando pacote") : $service" "xbps-install -Sy $service"
-		sh_cmd_job "$(gettext "Ativando serviço")  : $service" "ln -sf /etc/sv/$service /etc/runit/runsvdir/current/"
-		sh_cmd_job "$(gettext "Reiniciando serviço") : $service" "sv restart $service"
+		sh_cmd_job "$(gettext 'Instalando pacote') : $service" "xbps-install -Sy $service"
+		sh_cmd_job "$(gettext 'Ativando serviço')  : $service" "ln -sf /etc/sv/$service /etc/runit/runsvdir/current/"
+		sh_cmd_job "$(gettext 'Reiniciando serviço') : $service" "sv restart $service"
 	done
 }
 
@@ -253,15 +254,15 @@ sh_choosewifi() {
 		local result
 		local sep="\xe2\x94\x82"
 
-		last_msg="$(gettext "Verificando redes wifi")"
+		last_msg="$(gettext 'Verificando redes wifi')"
 		wpa_cli scan_results 2>&1 | tee -i -a "$BOOTLOG" >$LOGGER
 		if [[ "${PIPESTATUS[0]}" -gt 0 ]]; then
-			info "WIFI" "${BLUE}$(gettext "A varredura não retornou nenhum resultado.")" \
-				"$(gettext "Aparentemente, o serviço wpa_supplicant não está em execução.")" \
+			info "WIFI" "${BLUE}$(gettext 'A varredura não retornou nenhum resultado.')" \
+				"$(gettext 'Aparentemente, o serviço wpa_supplicant não está em execução.')" \
 				"" \
-				"${RED}$(gettext "Tente o seguinte"):${RESET}" \
-				"${BOLD}${WHITE}$(gettext "1-Use a opção Serviços no menu para ativar.")" \
-				"$(gettext "2-Verifique se existe um dispositivo wifi conectado à máquina.")"
+				"${RED}$(gettext 'Tente o seguinte'):${RESET}" \
+				"${BOLD}${WHITE}$(gettext '1-Use a opção Serviços no menu para ativar.')" \
+				"$(gettext '2-Verifique se existe um dispositivo wifi conectado à máquina.')"
 			return 1
 		fi
 		scan_results=$(wpa_cli scan_results)
@@ -305,7 +306,7 @@ sh_confwifi() {
 	while true; do
 		exec 3>&1
 		wifitext=$(${DIALOG} \
-			--title "$(gettext "=== REDE WI-FI ===")" \
+			--title "$(gettext '=== REDE WI-FI ===')" \
 			--colors \
 			--backtitle "$ccabec" \
 			--insecure "$@" \
@@ -325,7 +326,7 @@ sh_confwifi() {
 			mapfile -t aWifi <<<"$wifitext"
 			_REDE_WIFI="${aWifi[0]}"
 			_SENHA_WIFI="${aWifi[1]}"
-			log_wait_msg "$(gettext "Configurações feitas. Prosseguindo com a instalação.")"
+			log_wait_msg "$(gettext 'Configurações feitas. Prosseguindo com a instalação.')"
 			sh_update_wpa_suplicant
 			sh_mkservices
 			;;

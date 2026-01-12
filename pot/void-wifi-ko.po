@@ -1,0 +1,102 @@
+# Korean translations for PACKAGE package.
+# Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-11 21:12-0400\n"
+"PO-Revision-Date: 2026-01-11 21:12-0400\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: void-wifi:88
+msgid "Interrompido! Saindo..."
+msgstr "중단된! 퇴거..."
+
+#: void-wifi:120
+msgid "Removendo arquivos temporários..."
+msgstr "임시 파일을 제거하는 중..."
+
+#: void-wifi:127
+msgid "Ajustando"
+msgstr "조정 중"
+
+#: void-wifi:168
+msgid "erro: você não pode executar esta operação a menos que seja root."
+msgstr "오류: 루트가 아니면 이 작업을 수행할 수 없습니다."
+
+#: void-wifi:182 void-wifi:185
+msgid "IMPOSSÍVEL CONTINUAR"
+msgstr "계속할 수 없습니다"
+
+#: void-wifi:183
+msgid "Este script precisa dos comandos listados acima"
+msgstr "이 스크립트에는 위에 나열된 명령이 필요합니다."
+
+#: void-wifi:184
+msgid "Instale-os e/ou verifique se eles estão em seu"
+msgstr "이를 설치하거나 귀하의 컴퓨터에 있는지 확인하십시오."
+
+#: void-wifi:189
+msgid "Instalar commando(s)"
+msgstr "설치 명령"
+
+#: void-wifi:191
+msgid "INFO: Execute o aplicativo novamente"
+msgstr "정보: 애플리케이션을 다시 실행하세요."
+
+#: void-wifi:193
+msgid "ERRO ao instalar comandos. Tente manualmente."
+msgstr "명령을 설치할 때 오류가 발생했습니다. 수동으로 시도해 보세요."
+
+#: void-wifi:242
+msgid "Instalando pacote"
+msgstr "패키지 설치 중"
+
+#: void-wifi:243
+msgid "Ativando serviço"
+msgstr "서비스 활성화"
+
+#: void-wifi:244
+msgid "Reiniciando serviço"
+msgstr "서비스 다시 시작"
+
+#: void-wifi:257
+msgid "Verificando redes wifi"
+msgstr "Wi-Fi 네트워크 확인 중"
+
+#: void-wifi:260
+msgid "A varredura não retornou nenhum resultado."
+msgstr "스캔 결과가 반환되지 않았습니다."
+
+#: void-wifi:261
+msgid "Aparentemente, o serviço wpa_supplicant não está em execução."
+msgstr "분명히 wpa_supplicant 서비스가 실행되고 있지 않습니다."
+
+#: void-wifi:263
+msgid "Tente o seguinte"
+msgstr "다음을 시도해 보세요"
+
+#: void-wifi:264
+msgid "1-Use a opção Serviços no menu para ativar."
+msgstr "1-메뉴의 서비스 옵션을 사용하여 활성화합니다."
+
+#: void-wifi:265
+msgid "2-Verifique se existe um dispositivo wifi conectado à máquina."
+msgstr "2-기기에 WiFi 장치가 연결되어 있는지 확인하십시오."
+
+#: void-wifi:309
+msgid "=== REDE WI-FI ==="
+msgstr "=== REDE Wi-Fi =="
+
+#: void-wifi:329
+msgid "Configurações feitas. Prosseguindo com a instalação."
+msgstr "설정이 완료되었습니다. 설치를 진행합니다."
