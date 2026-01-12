@@ -1214,7 +1214,8 @@ while [[ $# -gt 0 ]]; do
 		;;
 
 	-A | --all | --syncall)
-		next_arg="${2:-}"
+      next_arg="${2:-}"
+      next_arg="${next_arg,,}"
 		if [[ "$next_arg" =~ ^(stable|testing|extra|aur|void|all)$ ]]; then
 			if [[ "$next_arg" == 'void' ]]; then
 				void=true
