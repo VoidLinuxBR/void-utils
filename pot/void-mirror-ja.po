@@ -11,162 +11,162 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: none\n"
+"Language: ja\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: usr/local/bin/void-mirror:56
 msgid "Interrompido! Saindo..."
-msgstr ""
+msgstr "中断されました！出発中..."
 
 #: usr/local/bin/void-mirror:80
 msgid "Removendo arquivos temporários..."
-msgstr ""
+msgstr "一時ファイルを削除しています..."
 
 #: usr/local/bin/void-mirror:306
 msgid "verificando caminho"
-msgstr ""
+msgstr "パスを確認する"
 
 #: usr/local/bin/void-mirror:657
 msgid "LISTA DE ESPELHOS"
-msgstr ""
+msgstr "ミラーのリスト"
 
 #: usr/local/bin/void-mirror:657
 msgid "Não é possível continuar!"
-msgstr ""
+msgstr "続行できません!"
 
 #: usr/local/bin/void-mirror:658
 msgid "Arquivo de lista de espelhos não encontrado no caminho"
-msgstr ""
+msgstr "パス内にミラー リスト ファイルが見つかりません"
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:733
 #: usr/local/bin/void-mirror:737 usr/local/bin/void-mirror:866
 msgid "=== ESPELHO ==="
-msgstr ""
+msgstr "=== ミラー ==="
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:735
 msgid "Aguarde..."
-msgstr ""
+msgstr "待って..."
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:735
 msgid "testando com"
-msgstr ""
+msgstr "でテストする"
 
 #: usr/local/bin/void-mirror:732
 msgid "não retornou resultado"
-msgstr ""
+msgstr "結果が返されませんでした"
 
 #: usr/local/bin/void-mirror:737
 msgid "não foi localizado no"
-msgstr ""
+msgstr "にありませんでした"
 
 #: usr/local/bin/void-mirror:738
 msgid "não foi localizado em"
-msgstr ""
+msgstr "にありませんでした"
 
 #: usr/local/bin/void-mirror:753
 msgid "Deseja definir/alterar o espelho deste host para o(s) escolhido(s) ?"
-msgstr ""
+msgstr "このホストのミラーを選択したミラーに設定/変更しますか?"
 
 #: usr/local/bin/void-mirror:799 usr/local/bin/void-mirror:801
 msgid "BAIXAR LISTA DE ESPELHOS"
-msgstr ""
+msgstr "ミラーのリストをダウンロード"
 
 #: usr/local/bin/void-mirror:799
 msgid "Buscando nova lista de espelhos em"
-msgstr ""
+msgstr "ミラーの新しいリストを検索しています"
 
 #: usr/local/bin/void-mirror:802
 msgid "Verifique sua conexão com a internet"
-msgstr ""
+msgstr "インターネット接続を確認してください"
 
 #: usr/local/bin/void-mirror:803
 msgid "Incapaz de buscar uma nova lista de espelhos de"
-msgstr ""
+msgstr "新しいミラーリストを取得できません"
 
 #: usr/local/bin/void-mirror:804
 msgid "Tentando usar a lista local"
-msgstr ""
+msgstr "ローカルリストを使用しようとしています"
 
 #: usr/local/bin/void-mirror:844
 msgid "erro: você não pode realizar esta operação a menos que seja root."
-msgstr ""
+msgstr "エラー: root でない限り、この操作は実行できません。"
 
 #: usr/local/bin/void-mirror:845
 msgid "ERRO"
-msgstr ""
+msgstr "エラー"
 
 #: usr/local/bin/void-mirror:846
 msgid "não encontrei o comando"
-msgstr ""
+msgstr "コマンドが見つかりませんでした"
 
 #: usr/local/bin/void-mirror:847
 msgid "IMPOSSÍVEL CONTINUAR"
-msgstr ""
+msgstr "続行不可能"
 
 #: usr/local/bin/void-mirror:848
 msgid "Esse script precisa dos comandos listados acima"
-msgstr ""
+msgstr "このスクリプトには上記のコマンドが必要です"
 
 #: usr/local/bin/void-mirror:849
 msgid "Instale-os e/ou verifique se estão no seu"
-msgstr ""
+msgstr "それらをインストールするか、それらがあなたのコンピュータにインストールされているかどうかを確認してください。"
 
 #: usr/local/bin/void-mirror:850
 msgid "Instalar o(s) comando(s)"
-msgstr ""
+msgstr "コマンドをインストールする"
 
 #: usr/local/bin/void-mirror:851
 msgid "INFO: Rode novamente o aplicativo"
-msgstr ""
+msgstr "情報: アプリケーションを再度実行してください"
 
 #: usr/local/bin/void-mirror:852
 msgid "ERRO na instalação dos comandos. Tente manualmente."
-msgstr ""
+msgstr "コマンドのインストール時にエラーが発生しました。手動で試してください。"
 
 #: usr/local/bin/void-mirror:853
 msgid "Instalação abortada"
-msgstr ""
+msgstr "インストールが中止されました"
 
 #: usr/local/bin/void-mirror:854
 msgid "Ok"
-msgstr ""
+msgstr "わかりました"
 
 #: usr/local/bin/void-mirror:855
 msgid "Aceitar"
-msgstr ""
+msgstr "受け入れるには"
 
 #: usr/local/bin/void-mirror:856
 msgid "Sair"
-msgstr ""
+msgstr "外出する"
 
 #: usr/local/bin/void-mirror:857
 msgid "Sim"
-msgstr ""
+msgstr "シム"
 
 #: usr/local/bin/void-mirror:858
 msgid "Não"
-msgstr ""
+msgstr "いいえ"
 
 #: usr/local/bin/void-mirror:859
 msgid "Gerando"
-msgstr ""
+msgstr "生成中"
 
 #: usr/local/bin/void-mirror:860
 msgid "Atualizando espelhos..."
-msgstr ""
+msgstr "ミラーを更新しています..."
 
 #: usr/local/bin/void-mirror:861
 msgid "Usar as setas ↑ e ↓ para navegar."
-msgstr ""
+msgstr "↑ と ↓ の矢印を使用して移動します。"
 
 #: usr/local/bin/void-mirror:862
 msgid "Usar TAB para alternar entre os botões."
-msgstr ""
+msgstr "TAB を使用してボタンを切り替えます。"
 
 #: usr/local/bin/void-mirror:863
 msgid "Usar ENTER ou BARRA DE ESPAÇO para selecionar e aceitar."
-msgstr ""
+msgstr "Enter または Space キーを使用して選択し、受け入れます。"
 
 #: usr/local/bin/void-mirror:865
 msgid "Configurando espelho em"
-msgstr ""
+msgstr "ミラーオンの設定"
