@@ -4,7 +4,7 @@
 #  void-services
 #  Created: 2023/01/23
 #  Altered: 2024/03/08
-#  Updated: dom 11 jan 2026 10:59:28 -04
+#  Updated: seg 19 jan 2026 19:07:55 -04
 #
 #  Copyright (c) 2022-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -29,7 +29,7 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 #  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ############################################################################
-#export LANGUAGE=pt_BR
+export LANGUAGE="${LANGUAGE:-pt_BR}"
 export TEXTDOMAINDIR=/usr/share/locale
 export TEXTDOMAIN=void-services
 
@@ -39,11 +39,9 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly _VERSION_='0.6.01-20240308'
+readonly _VERSION_='1.1.19-20260119'
 readonly distro=$(uname -n)
-readonly DEPENDENCIES=(dialog cat sed grep printf)
-declare -A Aidioma=([pt_BR]=0 [en_US]=1 [de_DE]=2 [fr_FR]=3 [es_ES]=4 [it_IT]=5)
-declare -A Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT)
+readonly DEPENDENCIES=(gettext dialog cat sed grep)
 declare -i quiet=0
 declare -i grafico=1
 declare -i ncontador=0
@@ -58,32 +56,110 @@ cleanup() {
 	exit 1
 }
 
+sh_check_terminal() { [ ! -t 1 ] && use_color=false; }
+
 sh_setvarcolors() {
-	if [[ -n $(command -v "tput") ]]; then
+	sh_check_terminal
+	# does the terminal support true-color?
+	if [[ -n "$(command -v "tput")" ]]; then
 		#tput setaf 127 | cat -v  #capturar saida
-		#tput sgr0 # reset colors
-		bold=$(tput bold)
-		reset=$(tput sgr0)
-		black=$(tput setaf 0)
-		red=$(tput setaf 1)
-		green=$(tput setaf 2)
-		yellow=$(tput bold)$(tput setaf 3)
-		blue=$(tput setaf 4)
-		pink=$(tput setaf 5)
-		cyan=$(tput setaf 6)
-		white=$(tput setaf 7)
-		orange=$(tput setaf 3)
-		purple=$(tput setaf 125)
-		violet=$(tput setaf 61)
+		: "${RED=$(tput bold)$(tput setaf 196)}"
+		: "${GREEN=$(tput bold)$(tput setaf 2)}"
+		: "${YELLOW=$(tput bold)$(tput setaf 3)}"
+		: "${BLUE=$(tput setaf 4)}"
+		: "${PURPLE=$(tput setaf 125)}"
+		: "${CYAN=$(tput setaf 6)}"
+		: "${NC=$(tput sgr0)}"
+		: "${RESET=$(tput sgr0)}"
+		: "${BOLD=$(tput bold)}"
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${reverse=$(tput rev)}"
+		: "${branca=${black}$(tput setab 7)}"
+
+		: "${reset=$(tput sgr0)}"
+		: "${rst=$(tput sgr0)}"
+		: "${bold=$(tput bold)}"
+		: "${underline=$(tput smul)}"
+		: "${nounderline=$(tput rmul)}"
+		: "${reverse=$(tput rev)}"
+
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${red=$(tput bold)$(tput setaf 196)}"
+		: "${green=$(tput bold)$(tput setaf 2)}"
+		: "${yellow=$(tput bold)$(tput setaf 3)}"
+		: "${blue=$(tput setaf 27)}"
+		: "${pink=$(tput setaf 5)}"
+		: "${magenta=$(tput setaf 5)}"
+		: "${cyan=$(tput setaf 6)}"
+		: "${white=$(tput setaf 7)}"
+		: "${gray=$(tput setaf 8)}"
+		: "${light_red=$(tput setaf 9)}"
+		: "${light_green=$(tput setaf 10)}"
+		: "${light_yellow=$(tput setaf 11)}"
+		: "${light_blue=$(tput setaf 12)}"
+		: "${light_magenta=$(tput setaf 13)}"
+		: "${light_cyan=$(tput setaf 14)}"
+		: "${light_white=$(tput setaf 15)}"
+		: "${orange=$(tput setaf 202)}"
+		: "${purple=$(tput setaf 125)}"
+		: "${violet=$(tput setaf 61)}"
+
+		# Definir cores de fundo
+		: "${preto=$(tput setab 0)}"
+		: "${vermelho=$(tput setab 196)}"
+		: "${verde=$(tput setab 2)}"
+		: "${amarelo=$(tput setab 3)}"
+		: "${azul=$(tput setab 20)}"
+		: "${roxo=$(tput setab 5)}"
+		: "${ciano=$(tput setab 6)}"
+		: "${branca="${black}$(tput setab 7)"}"
+		: "${cinza=$(tput setab 8)}"
+		: "${laranja=$(tput setab 202)}"
+		: "${roxa=$(tput setab 125)}"
+		: "${violeta=$(tput setab 61)}"
+
+		: "${COL_NC='\e[0m'}" # No Color
+		: "${COL_LIGHT_GREEN='\e[1;32m'}"
+		: "${COL_LIGHT_RED='\e[1;31m'}"
+		: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
+		: "${OVER="\\r\\033[K"}"
+		: "${DOTPREFIX="  ${black}::${reset} "}"
+		: "${clrkey=${light_white}}"
+		: "${TICK="${clrkey}[${green}✓✓✓${clrkey}]${rst}"}"
+		: "${CROSS="${clrkey}[${red}✗✗✗${clrkey}]${rst}"}"
+		: "${MID="${clrkey}[${red}✗✗${green}✓${clrkey}]${rst}"}"
+		: "${WARN="${clrkey}[${yellow}⚠  ${clrkey}]${yellow}"}"
+		: "${INFO="${clrkey}[${yellow}➡  ${clrkey}]${rst}"}"
+
+		# dialog colors
+		REVERSE="\Zr"
+		UNDERLINE="\Zu"
+		BOLD="\Zb"
+		RESET="\Zn"
+		BLACK="\Z0"
+		YELLOW="\Z3"
+		AMARELO="\Zb\Z3"
+		WHITE="\Z7"
+		BLUE="\Z4"
+		AZUL="\Zb\Z4"
+		CYAN="\Z6"
+		RED="\Z1"
+		GREEN="\Z2"
+		MAGENTA="\Z5"
 	else
 		sh_unsetvarcolors
 	fi
 }
 
 sh_unsetvarcolors() {
-	unset reset green red bold blue cyan orange
-	unset pink white yellow violet purple
-	sh_setlogprefix
+	unset RED GREEN YELLOW BLUE PURPLE CYAN NC RESET BOLD
+	unset reset rst bold underline nounderline reverse
+	unset black red green yellow blue magenta cyan white gray orange purple violet
+	unset light_red light_green light_yellow light_blue light_magenta light_cyan light_white
+	unset preto vermelho verde amarelo azul roxo ciano branca cinza laranja roxa violeta
+	TICK="${white}[${verde}✓${rst}${white}]${rst}"
+	CROSS="${white}[${roxa}✗${rst}${white}]${rst}"
+	INFO="${white}[${cinza}i${rst}${white}]${rst}"
 }
 
 sh_setlogprefix() {
@@ -120,6 +196,17 @@ info_msg() {
 	printf "\033[1m$@\n\033[m"
 }
 
+log_msg() { echo -e "${INFO} ${*}${reset}"; }
+log_ok() { echo -e "${TICK} ${*}${reset}"; }
+log_err() { echo -e "${CROSS} ${*}${reset}"; }
+log_mid() { echo -e "${MID} ${*}${reset}"; }
+log_warn() { echo -e "${WARN} ${*}${reset}"; }
+msg_tab() { echo -e "  ${INFO} ${*}${reset}"; }
+log_ok_tab() { echo -e "  ${TICK} ${*}${reset}"; }
+log_err_tab() { echo -e "  ${CROSS} ${*}${reset}"; }
+log_mid_tab() { echo -e "  ${MID} ${*}${reset}"; }
+log_warn_tab() { echo -e "  ${WARN} ${*}${reset}"; }
+
 sh_setambiente() {
 	readonly true=1
 	readonly false=0
@@ -128,15 +215,6 @@ sh_setambiente() {
 	readonly BOOTLOG="/tmp/$APP-$(sh_diahora).log"
 	: "${ccabec="$APP v${_VERSION_}"}"
 	: "${DIALOG=${DIALOG:-"dialog"}}"
-
-	# flag languages
-	: PT_BR=0
-	: "${EN_US=1}"
-	: "${DE_DE=2}"
-	: "${FR_FR=3}"
-	: "${ES_ES=4}"
-	: "${IT_IT=5}"
-	: "${LC_DEFAULT=$(sh_getLocale)}"
 
 	# flag dialog exit status codes
 	: "${D_OK=0}"
@@ -194,9 +272,21 @@ sh_setascii_lines() {
 }
 
 sh_checkroot() {
-	if [ "$(id -u)" != "0" ]; then
-		die "${red} ${cmsg_operRoot[$LC_DEFAULT]}"
+	((EUID != 0)) && elevate_to_root "$@" || return 0
+}
+
+elevate_to_root() {
+	log_err "This script must be run as root. Elevating privileges..."
+	ccabec+='root [elevated]'
+	# Tenta usar sudo primeiro (caso esteja configurado)
+	if command -v sudo >/dev/null 2>&1; then
+		exec sudo bash "$0" "$@"
 	fi
+	# Se sudo falhar, tenta su
+	if command -v su >/dev/null 2>&1; then
+		exec su -c "$0 $*"
+	fi
+	die "Error: Unable to elevate privileges. Run manually as root."
 }
 
 sh_checkDependencies() {
@@ -205,25 +295,25 @@ sh_checkDependencies() {
 	declare -a missing
 
 	for d in "${DEPENDENCIES[@]}"; do
-		[[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && printf '%s\n' "${red}${cmsg_ERRO[$LC_DEFAULT]}${reset}: ${cmsg_CommandNotFound[$LC_DEFAULT]} ${cyan}'$d'${reset}"
+		[[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && printf '%s\n' "${red}${cmsg_ERRO}${reset}: ${cmsg_CommandNotFound} ${cyan}'$d'${reset}"
 	done
 	if ((errorFound)); then
-		echo "${yellow}--------------${cmsg_ImpossivelContinuar[$LC_DEFAULT]}-------------${reset}"
-		echo "${cmsg_ImpossivelContinuar1[$LC_DEFAULT]}" >&2
-		echo "${cmsg_ImpossivelContinuar2[$LC_DEFAULT]} \$PATH" >&2
+		echo "${yellow}--------------${cmsg_ImpossivelContinuar}-------------${reset}"
+		echo "${cmsg_ImpossivelContinuar1}" >&2
+		echo "${cmsg_ImpossivelContinuar2} \$PATH" >&2
 		echo "${yellow}-----------------------------------------------${reset}"
 
 		if [[ "$distro" != @(void|void-live|voidlinux) ]]; then
 			echo
-			if readconf "${yellow}${cmsg_InstCommand[$LC_DEFAULT]} '${cyan}${missing[*]}${reset}'?"; then
+			if readconf "${yellow}${cmsg_InstCommand} '${cyan}${missing[*]}${reset}'?"; then
 				if xbps-install -S "${missing[@]}"; then
-					die "${cmsg_RunNew[$LC_DEFAULT]}"
+					die "${cmsg_RunNew}"
 				else
-					die "${cmsg_RunNewErro[$LC_DEFAULT]}"
+					die "${cmsg_RunNewErro}"
 				fi
 			fi
 		fi
-		die "${cmsg_ERRO[$LC_DEFAULT]}: ${cmsg_InstalacaoAbortada[$LC_DEFAULT]}..."
+		die "${cmsg_ERRO}: ${cmsg_InstalacaoAbortada}..."
 	fi
 }
 
@@ -288,7 +378,7 @@ evaluate_retval() {
 	if ((error_value)); then
 		if ((error_fatal)); then
 			if [[ -z "$cmsgdie" ]]; then
-				die "${cmsg_InstalacaoAbortada[$LC_DEFAULT]}..."
+				die "${cmsg_InstalacaoAbortada}..."
 			else
 				die "$cmsgdie"
 			fi
@@ -343,8 +433,8 @@ conf() {
 		--colors \
 		--title "$xtitle" \
 		--backtitle "$ccabec" \
-		--yes-label "${cmsg_yeslabel[$LC_DEFAULT]}" \
-		--no-label "${cmsg_nolabel[$LC_DEFAULT]}" \
+		--yes-label "${cmsg_yeslabel}" \
+		--no-label "${cmsg_nolabel}" \
 		--yesno "$*" \
 		8 75
 	nchoice=$?
@@ -352,8 +442,8 @@ conf() {
 }
 
 readconf() {
-	local pNo="${cmsg_nolabel[$LC_DEFAULT]:0:1}"
-	local pYes="${cmsg_yeslabel[$LC_DEFAULT]:0:1}"
+	local pNo="${cmsg_nolabel:0:1}"
+	local pYes="${cmsg_yeslabel:0:1}"
 	local prompt="[$pYes/${pNo,,}]"
 	local ctype='S'
 	local lEmpty=$false
@@ -385,22 +475,22 @@ info() {
 		--colors \
 		--title "$1" \
 		--backtitle "$ccabec" \
-		--ok-label "${cmsg_ok[$LC_DEFAULT]}" \
+		--ok-label "${cmsg_ok}" \
 		--msgbox "$2\n$3\n$4\n$5\n$6" \
 		0 0
 }
 
 display_result() {
-    ${DIALOG} \
-        --colors \
-        --title "$2" \
-        --backtitle "$ccabec" \
-        --no-collapse \
-        --no-cr-wrap \
-        --no-nl-expand \
-        --ok-label "${cmsg_ok[$LC_DEFAULT]}" \
-        --msgbox "$1" \
-        15 100
+	${DIALOG} \
+		--colors \
+		--title "$2" \
+		--backtitle "$ccabec" \
+		--no-collapse \
+		--no-cr-wrap \
+		--no-nl-expand \
+		--ok-label "${cmsg_ok}" \
+		--msgbox "$1" \
+		15 100
 }
 
 alerta() {
@@ -408,7 +498,7 @@ alerta() {
 	${DIALOG} \
 		--title "$1" \
 		--backtitle "$ccabec" \
-		--ok-label "${cmsg_ok[$LC_DEFAULT]}" \
+		--ok-label "${cmsg_ok}" \
 		--msgbox "$2\n$3\n$4\n$5\n$6" \
 		10 60
 }
@@ -420,8 +510,8 @@ notconf() {
 		--colors \
 		--title "$xtitle" \
 		--backtitle "$ccabec" \
-		--yes-label "${cmsg_nolabel[$LC_DEFAULT]}" \
-		--no-label "${cmsg_yeslabel[$LC_DEFAULT]}" \
+		--yes-label "${cmsg_nolabel}" \
+		--no-label "${cmsg_yeslabel}" \
 		--yesno "$*" \
 		10 100
 	return $?
@@ -476,39 +566,38 @@ scrend() {
 }
 
 sh_setlanguage() {
-	#	langmsg=('lang=("pt_BR"	"en_US"	"de_DE"	"fr_FR"	"es_ES"	"it_IT")'
-	cmsg_LABEL1[pt_BR]="$(gettext "Usar as setas ↑ e ↓ para navegar")"
-	cmsg_LABEL2[pt_BR]="$(gettext "Usar TAB para alternar entre os botões")"
-	cmsg_LABEL3[pt_BR]="$(gettext "Usar BARRA DE ESPAÇO para selecionar/marcar")"
-	cmsg_LABEL4[pt_BR]="$(gettext "Usar ENTER para aceitar/executar")"
-	cmsg_MENU[pt_BR]="${cmsg_LABEL1[pt_BR]}\n${cmsg_LABEL3[pt_BR]}\n${cmsg_LABEL2[pt_BR]}\n${cmsg_LABEL4[pt_BR]}"
-	cmsg_ERRO[pt_BR]="$(gettext "ERRO")"
-	cmsg_operRoot[pt_BR]="$(gettext "erro: você não pode realizar esta operação a menos que seja root.")"
-	cmsg_ImpossivelContinuar[pt_BR]="$(gettext "IMPOSSÍVEL CONTINUAR")"
-	cmsg_ImpossivelContinuar1[pt_BR]="$(gettext "Esse script precisa dos comandos listados acima")"
-	cmsg_ImpossivelContinuar2[pt_BR]="$(gettext "Instale-os e/ou verifique se estão no seu")"
-	cmsg_InstCommand[pt_BR]="$(gettext "Instalar o(s) comando(s)")"
-	cmsg_RunNew[pt_BR]="$(gettext "INFO: Rode novamente o aplicativo")"
-	cmsg_RunNewErro[pt_BR]="$(gettext "ERRO na instalação dos comandos. Tente manualmente.")"
-	cmsg_InstalacaoAbortada[pt_BR]="$(gettext "Instalação abortada")"
-	cmsg_ok[pt_BR]="$(gettext "Ok")"
-	cmsg_yeslabel[pt_BR]="$(gettext "Sim")"
-	cmsg_nolabel[pt_BR]="$(gettext "Não")"
-	cmsg_descMirror[pt_BR]="$(gettext "Escolher espelho")"
-	cmsg_Aceitar[pt_BR]="$(gettext "Aceitar")"
-	cmsg_Sair[pt_BR]="$(gettext "Sair")"
-	cmsg_Services[pt_BR]="$(gettext "gerenciador de serviços")"
-	cmsg_servicosInstalados[pt_BR]="$(gettext "Aguarde... Verificando serviços instalados")"
-	cmsg_servicosAtivos[pt_BR]="$(gettext "Aguarde... Verificando serviços ativos")"
-	cmsg_servicosnotfound[pt_BR]="$(gettext "Nenhum serviço foi encontrado em")"
-	cmsg_welcome[pt_BR]="$(gettext "Bem-vindo ao $APP")"
-	cmsg_Idioma[pt_BR]="$(gettext "Escolha idioma")"
-	cmsg_Desativar[pt_BR]="$(gettext "Desativar")"
-	cmsg_Ativar[pt_BR]="$(gettext "Ativar")"
-	cmsg_ParandoServico[pt_BR]="$(gettext "Parando serviço")"
-	cmsg_AtivandoServico[pt_BR]="$(gettext "Ativando serviço")"
-	cmsg_IniciandoServico[pt_BR]="$(gettext "Iniciando serviço")"
-	cmsg_DesativandoServico[pt_BR]="$(gettext "Desativando serviço")"
+	cmsg_LABEL1="$(gettext "Usar as setas ↑ e ↓ para navegar")"
+	cmsg_LABEL2="$(gettext "Usar TAB para alternar entre os botões")"
+	cmsg_LABEL3="$(gettext "Usar BARRA DE ESPAÇO para selecionar/marcar")"
+	cmsg_LABEL4="$(gettext "Usar ENTER para aceitar/executar")"
+	cmsg_MENU="${cmsg_LABEL1}\n${cmsg_LABEL3}\n${cmsg_LABEL2}\n${cmsg_LABEL4}"
+	cmsg_ERRO="$(gettext "ERRO")"
+	cmsg_operRoot="$(gettext "erro: você não pode realizar esta operação a menos que seja root.")"
+	cmsg_ImpossivelContinuar="$(gettext "IMPOSSÍVEL CONTINUAR")"
+	cmsg_ImpossivelContinuar1="$(gettext "Esse script precisa dos comandos listados acima")"
+	cmsg_ImpossivelContinuar2="$(gettext "Instale-os e/ou verifique se estão no seu")"
+	cmsg_InstCommand="$(gettext "Instalar o(s) comando(s)")"
+	cmsg_RunNew="$(gettext "INFO: Rode novamente o aplicativo")"
+	cmsg_RunNewErro="$(gettext "ERRO na instalação dos comandos. Tente manualmente.")"
+	cmsg_InstalacaoAbortada="$(gettext "Instalação abortada")"
+	cmsg_ok="$(gettext "Ok")"
+	cmsg_yeslabel="$(gettext "Sim")"
+	cmsg_nolabel="$(gettext "Não")"
+	cmsg_descMirror="$(gettext "Escolher espelho")"
+	cmsg_Aceitar="$(gettext "Aceitar")"
+	cmsg_Sair="$(gettext "Sair")"
+	cmsg_Services="$(gettext "gerenciador de serviços")"
+	cmsg_servicosInstalados="$(gettext "Aguarde... Verificando serviços instalados")"
+	cmsg_servicosAtivos="$(gettext "Aguarde... Verificando serviços ativos")"
+	cmsg_servicosnotfound="$(gettext "Nenhum serviço foi encontrado em")"
+	cmsg_welcome="$(gettext "Bem-vindo ao $APP")"
+	cmsg_Idioma="$(gettext "Escolha idioma")"
+	cmsg_Desativar="$(gettext "Desativar")"
+	cmsg_Ativar="$(gettext "Ativar")"
+	cmsg_ParandoServico="$(gettext "Parando serviço")"
+	cmsg_AtivandoServico="$(gettext "Ativando serviço")"
+	cmsg_IniciandoServico="$(gettext "Iniciando serviço")"
+	cmsg_DesativandoServico="$(gettext "Desativando serviço")"
 }
 
 sh_disableServices() {
@@ -516,13 +605,9 @@ sh_disableServices() {
 
 	grafico=0
 	for service in "${_SERVICES[@]}"; do
-		sh_cmd_job "${cmsg_ParandoServico[$LC_DEFAULT]} $service" "sv stop $service" "$err_not_fatal"
-		sh_cmd_job "${cmsg_DesativandoServico[$LC_DEFAULT]} $service" "rm -f /var/service/$service" "$err_not_fatal"
+		sh_cmd_job "${cmsg_ParandoServico} $service" "sv stop $service" "$err_not_fatal"
+		sh_cmd_job "${cmsg_DesativandoServico} $service" "rm -f /var/service/$service" "$err_not_fatal"
 	done
-
-	#	for xmsg in "${langmsg[@]}"; do eval "$xmsg"; done
-	#echo "lang       ${#lang[@]} ${lang[@]} ${lang[$PT_BR]} ${lang[$EN_US]}"
-	#echo "cmsg_ERRO ${#cmsg_ERRO[@]} ${cmsg_ERRO[@]} ${cmsg_ERRO[$PT_BR]} ${cmsg_ERRO[$EN_US]}"
 }
 
 sh_splitarray() {
@@ -545,17 +630,6 @@ sh_splitarray() {
 	echo "${array[pos - 1]}"
 }
 
-sh_getLocale() {
-	local lc
-
-	LC_DEFAULT="${Alanguage[pt_BR]}"
-	LOCALE="pt_BR"
-	#   if lc=$(grep _ <(locale -a) | head -1 | cut -c1-5); then
-	#       LOCALE="$lc"
-	#       LC_DEFAULT="${Alanguage[$lc]}"
-	#   fi
-}
-
 sh_cmd_job() {
 	local cmsg="$1"
 	local cjob="$2"
@@ -565,7 +639,7 @@ sh_cmd_job() {
 	msg "INFO" "$cmsg"
 	$cjob >>"$BOOTLOG" 2>&1
 	evaluate_retval "$?" "$err_not_fatal"
-#	return "$?"
+	#	return "$?"
 }
 
 sh_enableServices() {
@@ -581,11 +655,11 @@ sh_enableServices() {
 	# touch /etc/sv/<service>/down
 
 	for service in "${_SERVICES[@]}"; do
-		sh_cmd_job "${cmsg_ParandoServico[$LC_DEFAULT]} $service"   "sv stop $service" "$err_not_fatal"
+		sh_cmd_job "${cmsg_ParandoServico} $service" "sv stop $service" "$err_not_fatal"
 		sleep 1
-#		sh_cmd_job "${cmsg_AtivandoServico[$LC_DEFAULT]} $service"  "ln -sf /etc/sv/$service /var/service/" "$err_not_fatal"
-		sh_cmd_job "${cmsg_AtivandoServico[$LC_DEFAULT]} $service"  "ln -sf /etc/sv/$service /etc/runit/runsvdir/default/" "$err_not_fatal"
-		sh_cmd_job "${cmsg_IniciandoServico[$LC_DEFAULT]} $service" "sv start $service" "$err_not_fatal"
+		#		sh_cmd_job "${cmsg_AtivandoServico} $service"  "ln -sf /etc/sv/$service /var/service/" "$err_not_fatal"
+		sh_cmd_job "${cmsg_AtivandoServico} $service" "ln -sf /etc/sv/$service /etc/runit/runsvdir/default/" "$err_not_fatal"
+		sh_cmd_job "${cmsg_IniciandoServico} $service" "sv start $service" "$err_not_fatal"
 		sleep 1
 	done
 }
@@ -594,9 +668,9 @@ sh_disableServices() {
 	local service
 
 	for service in "${_SERVICES[@]}"; do
-		sh_cmd_job "${cmsg_ParandoServico[$LC_DEFAULT]} $service"     "sv stop $service" "$err_not_fatal"
-#		sh_cmd_job "${cmsg_DesativandoServico[$LC_DEFAULT]} $service" "rm -f /var/service/$service" "$err_not_fatal"
-		sh_cmd_job "${cmsg_DesativandoServico[$LC_DEFAULT]} $service" "touch /etc/sv/$service/down" "$err_not_fatal"
+		sh_cmd_job "${cmsg_ParandoServico} $service" "sv stop $service" "$err_not_fatal"
+		#		sh_cmd_job "${cmsg_DesativandoServico} $service" "rm -f /var/service/$service" "$err_not_fatal"
+		sh_cmd_job "${cmsg_DesativandoServico} $service" "touch /etc/sv/$service/down" "$err_not_fatal"
 		sleep 1
 	done
 	display_result "$(sv status ${_SERVICES[@]})"
@@ -613,7 +687,7 @@ sh_chooseservices() {
 		local nconta=0
 		local nc=0
 
-		msg "** SERVICES **" "$(log_info_msg "${cmsg_servicosInstalados[$LC_DEFAULT]}")"
+		msg "** SERVICES **" "$(log_info_msg "${cmsg_servicosInstalados}")"
 		if pushd '/etc/sv/' >>"$BOOTLOG" 2>&-; then
 			evaluate_retval "$?" "$err_not_fatal"
 			aservices=($(ls))
@@ -624,13 +698,13 @@ sh_chooseservices() {
 
 		nconta="${#aservices[@]}"
 		if ! ((nconta)); then
-			info "** SERVICES **" "\n${RED}${cmsg_servicosnotfound[$LC_DEFAULT]} /etc/sv/${RESET}"
-			info_msg "${red}${cmsg_InstalacaoAbortada[$LC_DEFAULT]}...${reset}"
+			info "** SERVICES **" "\n${RED}${cmsg_servicosnotfound} /etc/sv/${RESET}"
+			info_msg "${red}${cmsg_InstalacaoAbortada}...${reset}"
 			cleanup
 		fi
 
 		nc=0
-		msg "** SERVICES **" "$(log_info_msg "${cmsg_servicosAtivos[$LC_DEFAULT]}")"
+		msg "** SERVICES **" "$(log_info_msg "${cmsg_servicosAtivos}")"
 		for x in "${aservices[@]}"; do
 			if sv status /etc/runit/runsvdir/current/"$x" >>"$BOOTLOG"; then
 				status=$(sv status /etc/runit/runsvdir/current/"$x" | cut -d: -f1,3)
@@ -648,82 +722,57 @@ sh_chooseservices() {
 			array+=("$(sh_splitarray "${Asv[$x]}" 1)" "$(printf "$sep%-8s$sep%-40s" "$(sh_splitarray "${Asv[$x]}" 2)" "$(sh_splitarray "${Asv[$x]}" 3)")" "${Aflag[$x]}")
 		done
 
-		service=$(${DIALOG} --title "** ${cmsg_Services[$LC_DEFAULT]^^} **" \
-			--backtitle "$ccabec" \
-			--colors \
-			--clear \
-			--cancel-label "${cmsg_Sair[$LC_DEFAULT]}" \
-			--ok-label "${cmsg_Ativar[$LC_DEFAULT]}" \
-			--extra-button --extra-label "${cmsg_Desativar[$LC_DEFAULT]}" \
-			--checklist "${cmsg_MENU[$LC_DEFAULT]}" \
-			0 0 30 "${array[@]}" 2>&1 >/dev/tty)
+		while true; do
+			service=$(${DIALOG} \
+				--title "** ${cmsg_Services^^} **" \
+				--backtitle "$ccabec" \
+				--colors \
+				--clear \
+				--cancel-label "${cmsg_Sair}" \
+				--ok-label "${cmsg_Ativar}" \
+				--extra-button --extra-label "${cmsg_Desativar}" \
+				--checklist "${cmsg_MENU}" \
+				22 0 30 "${array[@]}" 2>&1 >/dev/tty)
 
-		exit_status=$?
-		_SERVICES=($(strtoarray "$service"))
-		case $exit_status in
-		"$D_ESC" | "$D_CANCEL")
-			return
-			;;
-		"$D_OK")
-			sh_enableServices "$@"
-			;;
-		3)
-			sh_disableServices "$@"
-			;;
-		esac
-	done
-}
-
-sh_main() {
-	while true; do
-		i18=$(${DIALOG} \
-			--stdout \
-			--default-item "$LC_DEFAULT" \
-			--clear \
-			--backtitle "$ccabec" \
-			--title "${cmsg_welcome[$LC_DEFAULT]}" \
-			--ok-label "${cmsg_Aceitar[$LC_DEFAULT]}" \
-			--cancel-label "${cmsg_Sair[$LC_DEFAULT]}" \
-			--menu "\n${cmsg_Idioma[$LC_DEFAULT]}:" \
-			0 80 0 \
-			0 'Português' \
-			1 'English' \
-			2 'Deustch' \
-			3 'Français' \
-			4 'Español' \
-			5 'Italiano')
-
-		exit_status=$?
-		case $exit_status in
-		"$D_ESC" | "$D_CANCEL")
-			scrend 0
-			;;
-		esac
-		LC_DEFAULT="$i18"
-		LOCALE="${Alocale[$i18]}"
-		break
+			exit_status=$?
+			_SERVICES=($(strtoarray "$service"))
+			case $exit_status in
+			"$D_ESC" | "$D_CANCEL")
+				return
+				;;
+			"$D_OK")
+				((${#_SERVICES[@]} >= 1)) && {
+					sh_enableServices "$@"
+					break
+				}
+				;;
+			3)
+				((${#_SERVICES[@]} >= 1)) && {
+					sh_disableServices "$@"
+					break
+				}
+				;;
+			esac
+			info "** ${cmsg_Services^^} **" "\n\n$(gettext 'Use barra de espaço para marcar/escolher.')"
+			continue
+		done
+        continue
 	done
 }
 
 sh_setambiente
-sh_getLocale
 sh_setlanguage
 sh_setvarcolors
 sh_setascii_lines
 sh_setlogprefix
 sh_checkDependencies
 sh_disableprintk
+
 [[ "$1" = @(-V|-v|version|-version|--version) ]] && {
 	sh_version
 	exit $(($# ? 0 : 1))
 }
 [[ "$1" = @(-g|-G|--grafico) || "$2" = @(-g|-G|--grafico) ]] && grafico=$true
-if [[ -n "$1" ]] && [[ "$1" -ge 0 ]]; then
-	LC_DEFAULT="$1"
-	LOCALE="${Alocale[$1]}"
-else
-	#	sh_main "$@"
-	sh_checkroot
-fi
+sh_checkroot "$@"
 sh_chooseservices "$@"
 sh_enableprintk
