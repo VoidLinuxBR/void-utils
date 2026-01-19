@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-# script wrapper para /usr/bin/chili-vpm vsv
-# Copyright (c) Vilmar Catafesta, 2019-2025 <vcatafesta@gmail.com>
-
-chili-vpm vsv "$@"
