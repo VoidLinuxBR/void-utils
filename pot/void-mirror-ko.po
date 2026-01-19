@@ -11,162 +11,162 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: none\n"
+"Language: ko\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: usr/local/bin/void-mirror:56
 msgid "Interrompido! Saindo..."
-msgstr ""
+msgstr "중단된! 퇴거..."
 
 #: usr/local/bin/void-mirror:80
 msgid "Removendo arquivos temporários..."
-msgstr ""
+msgstr "임시 파일 삭제 중..."
 
 #: usr/local/bin/void-mirror:306
 msgid "verificando caminho"
-msgstr ""
+msgstr "경로 확인"
 
 #: usr/local/bin/void-mirror:657
 msgid "LISTA DE ESPELHOS"
-msgstr ""
+msgstr "거울 목록"
 
 #: usr/local/bin/void-mirror:657
 msgid "Não é possível continuar!"
-msgstr ""
+msgstr "계속할 수 없습니다!"
 
 #: usr/local/bin/void-mirror:658
 msgid "Arquivo de lista de espelhos não encontrado no caminho"
-msgstr ""
+msgstr "경로에서 미러 목록 파일을 찾을 수 없습니다."
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:733
 #: usr/local/bin/void-mirror:737 usr/local/bin/void-mirror:866
 msgid "=== ESPELHO ==="
-msgstr ""
+msgstr "=== 거울 ==="
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:735
 msgid "Aguarde..."
-msgstr ""
+msgstr "기다리다..."
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:735
 msgid "testando com"
-msgstr ""
+msgstr "테스트"
 
 #: usr/local/bin/void-mirror:732
 msgid "não retornou resultado"
-msgstr ""
+msgstr "결과를 반환하지 않았습니다"
 
 #: usr/local/bin/void-mirror:737
 msgid "não foi localizado no"
-msgstr ""
+msgstr "에 위치하지 않았습니다"
 
 #: usr/local/bin/void-mirror:738
 msgid "não foi localizado em"
-msgstr ""
+msgstr "에 위치하지 않았습니다"
 
 #: usr/local/bin/void-mirror:753
 msgid "Deseja definir/alterar o espelho deste host para o(s) escolhido(s) ?"
-msgstr ""
+msgstr "이 호스트의 미러를 선택한 호스트로 설정/변경하시겠습니까?"
 
 #: usr/local/bin/void-mirror:799 usr/local/bin/void-mirror:801
 msgid "BAIXAR LISTA DE ESPELHOS"
-msgstr ""
+msgstr "미러 목록 다운로드"
 
 #: usr/local/bin/void-mirror:799
 msgid "Buscando nova lista de espelhos em"
-msgstr ""
+msgstr "에서 새 미러 목록을 검색하는 중입니다."
 
 #: usr/local/bin/void-mirror:802
 msgid "Verifique sua conexão com a internet"
-msgstr ""
+msgstr "인터넷 연결을 확인하세요"
 
 #: usr/local/bin/void-mirror:803
 msgid "Incapaz de buscar uma nova lista de espelhos de"
-msgstr ""
+msgstr "새 미러 목록을 가져올 수 없습니다."
 
 #: usr/local/bin/void-mirror:804
 msgid "Tentando usar a lista local"
-msgstr ""
+msgstr "로컬 목록을 사용하려고 합니다."
 
 #: usr/local/bin/void-mirror:844
 msgid "erro: você não pode realizar esta operação a menos que seja root."
-msgstr ""
+msgstr "오류: 루트가 아니면 이 작업을 수행할 수 없습니다."
 
 #: usr/local/bin/void-mirror:845
 msgid "ERRO"
-msgstr ""
+msgstr "오류"
 
 #: usr/local/bin/void-mirror:846
 msgid "não encontrei o comando"
-msgstr ""
+msgstr "명령어를 못 찾았어요"
 
 #: usr/local/bin/void-mirror:847
 msgid "IMPOSSÍVEL CONTINUAR"
-msgstr ""
+msgstr "계속할 수 없습니다"
 
 #: usr/local/bin/void-mirror:848
 msgid "Esse script precisa dos comandos listados acima"
-msgstr ""
+msgstr "이 스크립트에는 위에 나열된 명령이 필요합니다."
 
 #: usr/local/bin/void-mirror:849
 msgid "Instale-os e/ou verifique se estão no seu"
-msgstr ""
+msgstr "이를 설치하거나 귀하의 컴퓨터에 있는지 확인하십시오."
 
 #: usr/local/bin/void-mirror:850
 msgid "Instalar o(s) comando(s)"
-msgstr ""
+msgstr "명령 설치"
 
 #: usr/local/bin/void-mirror:851
 msgid "INFO: Rode novamente o aplicativo"
-msgstr ""
+msgstr "정보: 애플리케이션을 다시 실행하세요."
 
 #: usr/local/bin/void-mirror:852
 msgid "ERRO na instalação dos comandos. Tente manualmente."
-msgstr ""
+msgstr "명령을 설치할 때 오류가 발생했습니다. 수동으로 시도해 보세요."
 
 #: usr/local/bin/void-mirror:853
 msgid "Instalação abortada"
-msgstr ""
+msgstr "설치가 중단되었습니다."
 
 #: usr/local/bin/void-mirror:854
 msgid "Ok"
-msgstr ""
+msgstr "좋아요"
 
 #: usr/local/bin/void-mirror:855
 msgid "Aceitar"
-msgstr ""
+msgstr "수락하려면"
 
 #: usr/local/bin/void-mirror:856
 msgid "Sair"
-msgstr ""
+msgstr "외출하다"
 
 #: usr/local/bin/void-mirror:857
 msgid "Sim"
-msgstr ""
+msgstr "심"
 
 #: usr/local/bin/void-mirror:858
 msgid "Não"
-msgstr ""
+msgstr "아니요"
 
 #: usr/local/bin/void-mirror:859
 msgid "Gerando"
-msgstr ""
+msgstr "생성 중"
 
 #: usr/local/bin/void-mirror:860
 msgid "Atualizando espelhos..."
-msgstr ""
+msgstr "미러 업데이트 중..."
 
 #: usr/local/bin/void-mirror:861
 msgid "Usar as setas ↑ e ↓ para navegar."
-msgstr ""
+msgstr "탐색하려면 ↑ 및 ↓ 화살표를 사용하세요."
 
 #: usr/local/bin/void-mirror:862
 msgid "Usar TAB para alternar entre os botões."
-msgstr ""
+msgstr "버튼 사이를 전환하려면 TAB을 사용하세요."
 
 #: usr/local/bin/void-mirror:863
 msgid "Usar ENTER ou BARRA DE ESPAÇO para selecionar e aceitar."
-msgstr ""
+msgstr "선택하고 적용하려면 ENTER 또는 스페이스바를 사용하세요."
 
 #: usr/local/bin/void-mirror:865
 msgid "Configurando espelho em"
-msgstr ""
+msgstr "미러 구성"

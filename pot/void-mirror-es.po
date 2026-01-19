@@ -4,169 +4,169 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: chili-tradutor-go 2.1.17-20260116\n"
-"POT-Creation-Date: 2026-01-19 10:23-0400\n"
-"PO-Revision-Date: 2026-01-19 10:23-0400\n"
+"POT-Creation-Date: 2026-01-19 10:24-0400\n"
+"PO-Revision-Date: 2026-01-19 10:24-0400\n"
 "Last-Translator: Vilmar Catafesta <vcatafesta@gmail.com>\n"
 "Language-Team: Portuguese <https://github.com/chililinux/chili-tradutor-go>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: none\n"
+"Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: usr/local/bin/void-mirror:56
 msgid "Interrompido! Saindo..."
-msgstr ""
+msgstr "¡Interrumpido! Partida..."
 
 #: usr/local/bin/void-mirror:80
 msgid "Removendo arquivos temporários..."
-msgstr ""
+msgstr "Eliminando archivos temporales..."
 
 #: usr/local/bin/void-mirror:306
 msgid "verificando caminho"
-msgstr ""
+msgstr "comprobando ruta"
 
 #: usr/local/bin/void-mirror:657
 msgid "LISTA DE ESPELHOS"
-msgstr ""
+msgstr "LISTA DE ESPEJOS"
 
 #: usr/local/bin/void-mirror:657
 msgid "Não é possível continuar!"
-msgstr ""
+msgstr "¡No puedo continuar!"
 
 #: usr/local/bin/void-mirror:658
 msgid "Arquivo de lista de espelhos não encontrado no caminho"
-msgstr ""
+msgstr "Archivo de lista de espejos no encontrado en la ruta"
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:733
 #: usr/local/bin/void-mirror:737 usr/local/bin/void-mirror:866
 msgid "=== ESPELHO ==="
-msgstr ""
+msgstr "=== ESPEJO ==="
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:735
 msgid "Aguarde..."
-msgstr ""
+msgstr "Esperar..."
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:735
 msgid "testando com"
-msgstr ""
+msgstr "probando con"
 
 #: usr/local/bin/void-mirror:732
 msgid "não retornou resultado"
-msgstr ""
+msgstr "no devolvió resultado"
 
 #: usr/local/bin/void-mirror:737
 msgid "não foi localizado no"
-msgstr ""
+msgstr "no estaba ubicado en"
 
 #: usr/local/bin/void-mirror:738
 msgid "não foi localizado em"
-msgstr ""
+msgstr "no estaba ubicado en"
 
 #: usr/local/bin/void-mirror:753
 msgid "Deseja definir/alterar o espelho deste host para o(s) escolhido(s) ?"
-msgstr ""
+msgstr "¿Quieres configurar/cambiar el espejo de este host al elegido?"
 
 #: usr/local/bin/void-mirror:799 usr/local/bin/void-mirror:801
 msgid "BAIXAR LISTA DE ESPELHOS"
-msgstr ""
+msgstr "DESCARGAR LISTA DE ESPEJOS"
 
 #: usr/local/bin/void-mirror:799
 msgid "Buscando nova lista de espelhos em"
-msgstr ""
+msgstr "Buscando una nueva lista de espejos en"
 
 #: usr/local/bin/void-mirror:802
 msgid "Verifique sua conexão com a internet"
-msgstr ""
+msgstr "Comprueba tu conexión a Internet"
 
 #: usr/local/bin/void-mirror:803
 msgid "Incapaz de buscar uma nova lista de espelhos de"
-msgstr ""
+msgstr "No se puede recuperar la nueva lista de espejos"
 
 #: usr/local/bin/void-mirror:804
 msgid "Tentando usar a lista local"
-msgstr ""
+msgstr "Intentando usar la lista local"
 
 #: usr/local/bin/void-mirror:844
 msgid "erro: você não pode realizar esta operação a menos que seja root."
-msgstr ""
+msgstr "error: no puedes realizar esta operación a menos que seas root."
 
 #: usr/local/bin/void-mirror:845
 msgid "ERRO"
-msgstr ""
+msgstr "ERROR"
 
 #: usr/local/bin/void-mirror:846
 msgid "não encontrei o comando"
-msgstr ""
+msgstr "no encontré el comando"
 
 #: usr/local/bin/void-mirror:847
 msgid "IMPOSSÍVEL CONTINUAR"
-msgstr ""
+msgstr "IMPOSIBLE CONTINUAR"
 
 #: usr/local/bin/void-mirror:848
 msgid "Esse script precisa dos comandos listados acima"
-msgstr ""
+msgstr "Este script necesita los comandos enumerados anteriormente."
 
 #: usr/local/bin/void-mirror:849
 msgid "Instale-os e/ou verifique se estão no seu"
-msgstr ""
+msgstr "Instálalos y/o comprueba si están en tu"
 
 #: usr/local/bin/void-mirror:850
 msgid "Instalar o(s) comando(s)"
-msgstr ""
+msgstr "Instalar los comandos"
 
 #: usr/local/bin/void-mirror:851
 msgid "INFO: Rode novamente o aplicativo"
-msgstr ""
+msgstr "INFORMACIÓN: Ejecute la aplicación nuevamente"
 
 #: usr/local/bin/void-mirror:852
 msgid "ERRO na instalação dos comandos. Tente manualmente."
-msgstr ""
+msgstr "ERROR al instalar los comandos. Pruebe manualmente."
 
 #: usr/local/bin/void-mirror:853
 msgid "Instalação abortada"
-msgstr ""
+msgstr "Instalación cancelada"
 
 #: usr/local/bin/void-mirror:854
 msgid "Ok"
-msgstr ""
+msgstr "De acuerdo"
 
 #: usr/local/bin/void-mirror:855
 msgid "Aceitar"
-msgstr ""
+msgstr "aceptar"
 
 #: usr/local/bin/void-mirror:856
 msgid "Sair"
-msgstr ""
+msgstr "para salir"
 
 #: usr/local/bin/void-mirror:857
 msgid "Sim"
-msgstr ""
+msgstr "Sim"
 
 #: usr/local/bin/void-mirror:858
 msgid "Não"
-msgstr ""
+msgstr "No"
 
 #: usr/local/bin/void-mirror:859
 msgid "Gerando"
-msgstr ""
+msgstr "generando"
 
 #: usr/local/bin/void-mirror:860
 msgid "Atualizando espelhos..."
-msgstr ""
+msgstr "Actualizando espejos..."
 
 #: usr/local/bin/void-mirror:861
 msgid "Usar as setas ↑ e ↓ para navegar."
-msgstr ""
+msgstr "Utilice las flechas ↑ y ↓ para navegar."
 
 #: usr/local/bin/void-mirror:862
 msgid "Usar TAB para alternar entre os botões."
-msgstr ""
+msgstr "Utilice TAB para cambiar entre botones."
 
 #: usr/local/bin/void-mirror:863
 msgid "Usar ENTER ou BARRA DE ESPAÇO para selecionar e aceitar."
-msgstr ""
+msgstr "Utilice ENTER o BARRA ESPACIADORA para seleccionar y aceptar."
 
 #: usr/local/bin/void-mirror:865
 msgid "Configurando espelho em"
-msgstr ""
+msgstr "Configurando espejo en"

@@ -11,162 +11,162 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: none\n"
+"Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: usr/local/bin/void-mirror:56
 msgid "Interrompido! Saindo..."
-msgstr ""
+msgstr "Interrupted! Leaving..."
 
 #: usr/local/bin/void-mirror:80
 msgid "Removendo arquivos temporários..."
-msgstr ""
+msgstr "Removing temporary files..."
 
 #: usr/local/bin/void-mirror:306
 msgid "verificando caminho"
-msgstr ""
+msgstr "checking path"
 
 #: usr/local/bin/void-mirror:657
 msgid "LISTA DE ESPELHOS"
-msgstr ""
+msgstr "LIST OF MIRRORS"
 
 #: usr/local/bin/void-mirror:657
 msgid "Não é possível continuar!"
-msgstr ""
+msgstr "Can't continue!"
 
 #: usr/local/bin/void-mirror:658
 msgid "Arquivo de lista de espelhos não encontrado no caminho"
-msgstr ""
+msgstr "Mirror list file not found in path"
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:733
 #: usr/local/bin/void-mirror:737 usr/local/bin/void-mirror:866
 msgid "=== ESPELHO ==="
-msgstr ""
+msgstr "=== MIRROR ==="
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:735
 msgid "Aguarde..."
-msgstr ""
+msgstr "Wait..."
 
 #: usr/local/bin/void-mirror:729 usr/local/bin/void-mirror:735
 msgid "testando com"
-msgstr ""
+msgstr "testing with"
 
 #: usr/local/bin/void-mirror:732
 msgid "não retornou resultado"
-msgstr ""
+msgstr "did not return result"
 
 #: usr/local/bin/void-mirror:737
 msgid "não foi localizado no"
-msgstr ""
+msgstr "was not located in"
 
 #: usr/local/bin/void-mirror:738
 msgid "não foi localizado em"
-msgstr ""
+msgstr "was not located in"
 
 #: usr/local/bin/void-mirror:753
 msgid "Deseja definir/alterar o espelho deste host para o(s) escolhido(s) ?"
-msgstr ""
+msgstr "Do you want to set/change the mirror of this host to the chosen one(s)?"
 
 #: usr/local/bin/void-mirror:799 usr/local/bin/void-mirror:801
 msgid "BAIXAR LISTA DE ESPELHOS"
-msgstr ""
+msgstr "DOWNLOAD LIST OF MIRRORS"
 
 #: usr/local/bin/void-mirror:799
 msgid "Buscando nova lista de espelhos em"
-msgstr ""
+msgstr "Searching for new list of mirrors in"
 
 #: usr/local/bin/void-mirror:802
 msgid "Verifique sua conexão com a internet"
-msgstr ""
+msgstr "Check your internet connection"
 
 #: usr/local/bin/void-mirror:803
 msgid "Incapaz de buscar uma nova lista de espelhos de"
-msgstr ""
+msgstr "Unable to fetch new mirror list"
 
 #: usr/local/bin/void-mirror:804
 msgid "Tentando usar a lista local"
-msgstr ""
+msgstr "Trying to use the local list"
 
 #: usr/local/bin/void-mirror:844
 msgid "erro: você não pode realizar esta operação a menos que seja root."
-msgstr ""
+msgstr "error: you cannot perform this operation unless you are root."
 
 #: usr/local/bin/void-mirror:845
 msgid "ERRO"
-msgstr ""
+msgstr "ERROR"
 
 #: usr/local/bin/void-mirror:846
 msgid "não encontrei o comando"
-msgstr ""
+msgstr "I didn't find the command"
 
 #: usr/local/bin/void-mirror:847
 msgid "IMPOSSÍVEL CONTINUAR"
-msgstr ""
+msgstr "IMPOSSIBLE TO CONTINUE"
 
 #: usr/local/bin/void-mirror:848
 msgid "Esse script precisa dos comandos listados acima"
-msgstr ""
+msgstr "This script needs the commands listed above"
 
 #: usr/local/bin/void-mirror:849
 msgid "Instale-os e/ou verifique se estão no seu"
-msgstr ""
+msgstr "Install them and/or check if they are on your"
 
 #: usr/local/bin/void-mirror:850
 msgid "Instalar o(s) comando(s)"
-msgstr ""
+msgstr "Install the command(s)"
 
 #: usr/local/bin/void-mirror:851
 msgid "INFO: Rode novamente o aplicativo"
-msgstr ""
+msgstr "INFO: Run the application again"
 
 #: usr/local/bin/void-mirror:852
 msgid "ERRO na instalação dos comandos. Tente manualmente."
-msgstr ""
+msgstr "ERROR when installing the commands. Try manually."
 
 #: usr/local/bin/void-mirror:853
 msgid "Instalação abortada"
-msgstr ""
+msgstr "Installation aborted"
 
 #: usr/local/bin/void-mirror:854
 msgid "Ok"
-msgstr ""
+msgstr "Ok"
 
 #: usr/local/bin/void-mirror:855
 msgid "Aceitar"
-msgstr ""
+msgstr "To accept"
 
 #: usr/local/bin/void-mirror:856
 msgid "Sair"
-msgstr ""
+msgstr "To go out"
 
 #: usr/local/bin/void-mirror:857
 msgid "Sim"
-msgstr ""
+msgstr "Sim"
 
 #: usr/local/bin/void-mirror:858
 msgid "Não"
-msgstr ""
+msgstr "No"
 
 #: usr/local/bin/void-mirror:859
 msgid "Gerando"
-msgstr ""
+msgstr "Generating"
 
 #: usr/local/bin/void-mirror:860
 msgid "Atualizando espelhos..."
-msgstr ""
+msgstr "Updating mirrors..."
 
 #: usr/local/bin/void-mirror:861
 msgid "Usar as setas ↑ e ↓ para navegar."
-msgstr ""
+msgstr "Use the ↑ and ↓ arrows to navigate."
 
 #: usr/local/bin/void-mirror:862
 msgid "Usar TAB para alternar entre os botões."
-msgstr ""
+msgstr "Use TAB to switch between buttons."
 
 #: usr/local/bin/void-mirror:863
 msgid "Usar ENTER ou BARRA DE ESPAÇO para selecionar e aceitar."
-msgstr ""
+msgstr "Use ENTER or SPACEBAR to select and accept."
 
 #: usr/local/bin/void-mirror:865
 msgid "Configurando espelho em"
-msgstr ""
+msgstr "Configuring mirror on"
