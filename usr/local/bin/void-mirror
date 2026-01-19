@@ -4,7 +4,7 @@
 #  void-mirror
 #  Created: 2023/01/22
 #  Altered: 2024/03/08
-#  Updated: dom 11 jan 2026 12:20:36 -04
+#  Updated: dom 18 jan 2026 21:17:40 -04
 #
 #  Copyright (c) 2019-2026, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -45,7 +45,9 @@ readonly DEPENDENCIES=(wget curl dialog cat sed grep printf)
 declare -gA Aidioma=([pt_BR]=0 [en_US]=1 [de_DE]=2 [fr_FR]=3 [es_ES]=4 [it_IT]=5)
 declare -gA Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT)
 declare -gA Amirrors
-declare -gi quiet=0 grafico=1 ncontador=0
+declare -gi quiet=0
+declare -gi grafico=1
+declare -gi ncontador=0
 declare _MIRROR="repo-fastly.voidlinux.org"
 declare BOOTLOG
 declare distro
@@ -53,8 +55,9 @@ distro=$(uname -n)
 declare Interrupted
 Interrupted="$(gettext "Interrompido! Saindo...")"
 trap 'printf "\n${red}$Interrupted\n"; cleanup; exit 0' INT TERM HUP
+declare dialogRcFile="$HOME/.dialogrc"
 
-function debug() {
+debug() {
 	whiptail \
 		--fb \
 		--clear \
@@ -79,7 +82,56 @@ cleanup() {
 	exit 1
 }
 
-sh_ambiente() {
+sh_create_dialogrc() {
+	cat >"$dialogRcFile" <<'EOF'
+screen_color = (white,black,off)
+dialog_color = (white,black,off)
+title_color = (green,black,on)
+border_color = dialog_color
+shadow_color = (black,black,on)
+button_inactive_color = dialog_color
+button_key_inactive_color = dialog_color
+button_label_inactive_color = dialog_color
+button_active_color = (black,green,on)
+button_key_active_color = button_active_color
+button_label_active_color = (white,green,on)
+tag_key_selected_color = (white,green,on)
+item_selected_color = tag_key_selected_color
+form_text_color = (green,black,on)
+form_item_readonly_color = (cyan,black,on)
+itemhelp_color = (white,green,off)
+inputbox_color = dialog_color
+inputbox_border_color = dialog_color
+searchbox_color = dialog_color
+searchbox_title_color = title_color
+searchbox_border_color = border_color
+position_indicator_color = title_color
+menubox_color = dialog_color
+menubox_border_color = border_color
+item_color = dialog_color
+tag_color = title_color
+tag_selected_color = button_label_active_color
+tag_key_color = button_key_inactive_color
+check_color = dialog_color
+check_selected_color = button_active_color
+uarrow_color = screen_color
+darrow_color = screen_color
+form_active_text_color = button_active_color
+gauge_color = title_color
+border2_color = dialog_color
+searchbox_border2_color = dialog_color
+menubox_border2_color = dialog_color
+separate_widget = ''
+tab_len = 0
+visit_items = off
+use_shadow = off
+use_colors = on
+EOF
+	export DIALOGRC="$dialogRcFile"
+}
+
+sh_setEnvironment() {
+	[[ ! -e "$dialogRcFile" ]] && sh_create_dialogrc
 	declare url_mirror='http://void.chililinux.com/voidlinux/'
 	readonly true=1
 	readonly false=0
@@ -98,7 +150,6 @@ sh_ambiente() {
 	: "${EN_US=1}"
 	: "${DE_DE=2}"
 	: "${FR_FR=3}"
-	: "${LC_DEFAULT=$(sh_getlocale)}"
 
 	# flag dialog exit status codes
 	: "${D_OK=0}"
@@ -116,19 +167,19 @@ sh_ambiente() {
 	: "${REVERSE="\Zr"}"
 	: "${UNDERLINE="\Zu"}"
 
-   # dialog colors
-    GREEN="\Z2"
-    MAGENTA="\Z5"
-    REVERSE="\Zr"
-    UNDERLINE="\Zu"
-    BLACK="\Z0"
-    YELLOW="\Z3"
-    WHITE="\Z7"
-    BLUE="\Z4"
-    CYAN="\Z6"
-    RED="\Z1"
-    BOLD="\Zb"
-    RESET="\Zn"
+	# dialog colors
+	GREEN="\Z2"
+	MAGENTA="\Z5"
+	REVERSE="\Zr"
+	UNDERLINE="\Zu"
+	BLACK="\Z0"
+	YELLOW="\Z3"
+	WHITE="\Z7"
+	BLUE="\Z4"
+	CYAN="\Z6"
+	RED="\Z1"
+	BOLD="\Zb"
+	RESET="\Zn"
 	: echo "$err_fatal"
 
 	if [ -z "${COLUMNS}" ]; then
@@ -141,6 +192,8 @@ sh_ambiente() {
 	COL=$((COLUMNS - 8))
 	SET_COL="\\033[${COL}G" # at the $COL char
 	CURS_ZERO="\\033[0G"
+
+	sh_ascii_lines
 }
 
 sh_check_mirror_path() {
@@ -172,7 +225,7 @@ sh_ascii_lines() {
 
 sh_checkroot() {
 	if [ "$(id -u)" != "0" ]; then
-		die "${red} ${cmsg_operRoot[$LC_DEFAULT]}"
+		die "${red} ${cmsg_operRoot}"
 	fi
 }
 
@@ -182,26 +235,26 @@ sh_checkDependencies() {
 	declare -a missing
 
 	for d in "${DEPENDENCIES[@]}"; do
-		[[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && printf '%s\n' "${red}${cmsg_ERRO[$LC_DEFAULT]}${reset}: ${cmsg_CommandNotFound[$LC_DEFAULT]} ${cyan}'$d'${reset}"
+		[[ -z $(command -v "$d") ]] && missing+=("$d") && errorFound=1 && printf '%s\n' "${red}${cmsg_ERRO}${reset}: ${cmsg_CommandNotFound} ${cyan}'$d'${reset}"
 	done
 	if ((errorFound)); then
-		echo "${yellow}--------------${cmsg_ImpossivelContinuar[$LC_DEFAULT]}-------------${reset}"
-		echo "${cmsg_ImpossivelContinuar1[$LC_DEFAULT]}" >&2
-		echo "${cmsg_ImpossivelContinuar2[$LC_DEFAULT]} \$PATH" >&2
+		echo "${yellow}--------------${cmsg_ImpossivelContinuar}-------------${reset}"
+		echo "${cmsg_ImpossivelContinuar1}" >&2
+		echo "${cmsg_ImpossivelContinuar2} \$PATH" >&2
 		echo "${yellow}-----------------------------------------------${reset}"
 
 		if [[ "$distro" = @(void|void-live|voidlinux) ]]; then
 			echo
-			if readconf "${yellow}${cmsg_InstCommand[$LC_DEFAULT]} '${cyan}${missing[*]}${reset}' ?"; then
+			if readconf "${yellow}${cmsg_InstCommand} '${cyan}${missing[*]}${reset}' ?"; then
 				if xbps-install -Sy "${missing[@]}"; then
 					errorFound=0
 					sh_checkDependencies
 				else
-					die "${cmsg_RunNewErro[$LC_DEFAULT]}"
+					die "${cmsg_RunNewErro}"
 				fi
 			fi
 		else
-			die "${cmsg_ERRO[$LC_DEFAULT]}: ${cmsg_InstalacaoAbortada[$LC_DEFAULT]}..."
+			die "${cmsg_ERRO}: ${cmsg_InstalacaoAbortada}..."
 		fi
 	fi
 }
@@ -329,7 +382,7 @@ evaluate_retval() {
 	if ((error_value)); then
 		if ((error_fatal)); then
 			if [[ -z "$cmsgdie" ]]; then
-				die "${cmsg_InstalacaoAbortada[$LC_DEFAULT]}..."
+				die "${cmsg_InstalacaoAbortada}..."
 			else
 				die "$cmsgdie"
 			fi
@@ -392,7 +445,7 @@ info() {
 		--colors \
 		--title "$1" \
 		--backtitle "$ccabec" \
-		--ok-label "${cmsg_ok[$LC_DEFAULT]}" \
+		--ok-label "${cmsg_ok}" \
 		--msgbox "$2\n$3\n$4\n$5\n$6" \
 		10 75
 }
@@ -403,7 +456,7 @@ alerta() {
 		--colors \
 		--title "$1" \
 		--backtitle "$ccabec" \
-		--ok-label "${cmsg_ok[$LC_DEFAULT]}" \
+		--ok-label "${cmsg_ok}" \
 		--msgbox "$2\n$3\n$4\n$5\n$6" \
 		10 110
 }
@@ -415,8 +468,8 @@ conf() {
 		--colors \
 		--title "$xtitle" \
 		--backtitle "$ccabec" \
-		--yes-label "${cmsg_yeslabel[$LC_DEFAULT]}" \
-		--no-label "${cmsg_nolabel[$LC_DEFAULT]}" \
+		--yes-label "${cmsg_yeslabel}" \
+		--no-label "${cmsg_nolabel}" \
 		--yesno "$*" \
 		0 0
 	nchoice=$?
@@ -430,8 +483,8 @@ notconf() {
 		--colors \
 		--title "$xtitle" \
 		--backtitle "$ccabec" \
-		--yes-label "${cmsg_nolabel[$LC_DEFAULT]}" \
-		--no-label "${cmsg_yeslabel[$LC_DEFAULT]}" \
+		--yes-label "${cmsg_nolabel}" \
+		--no-label "${cmsg_yeslabel}" \
 		--yesno "$*" \
 		10 100
 	return $?
@@ -481,53 +534,6 @@ lenarraystr() {
 	echo "${#ADDR[@]}"
 }
 
-scrend() {
-	exit "$1"
-}
-
-sh_main() {
-	while true; do
-		i18=$(${DIALOG} \
-			--stdout \
-			--default-item "$LC_DEFAULT" \
-			--clear \
-			--backtitle "$ccabec" \
-			--title "${welcome[$LC_DEFAULT]}" \
-			--ok-label "${cmsg_Aceitar[$LC_DEFAULT]}" \
-			--cancel-label "${cmsg_Sair[$LC_DEFAULT]}" \
-			--menu "\n${escolhaIdioma[$LC_DEFAULT]}:" \
-			0 80 0 \
-			0 "$(gettext "Português")" \
-			1 "$(gettext "English")" \
-			2 "$(gettext "Deustch")" \
-			3 "$(gettext "Français")" \
-			4 "$(gettext "Español")" \
-			5 "$(gettext "Italiano")")
-
-		exit_status=$?
-		case $exit_status in
-		"$D_ESC" | "$D_CANCEL")
-			scrend 0
-			;;
-		esac
-		LC_DEFAULT="$i18"
-		LOCALE="${Alocale[$i18]}"
-		#       sh_choosemirror "$@"
-		break
-	done
-}
-
-sh_getlocale() {
-	local lc
-
-	LC_DEFAULT="${Aidioma[pt_BR]}"
-	LOCALE="pt_BR"
-	#	if lc=$(grep _ <(locale -a) | head -1 | cut -c1-5); then
-	#		LOCALE="$lc"
-	#		LC_DEFAULT="${Aidioma[$lc]}"
-	#	fi
-}
-
 sh_getRegion() {
 	case "$1" in
 	AF) echo "Africa" ;;
@@ -557,7 +563,7 @@ sh_getMirrors() {
 	fi
 
 	while read -r line; do
-	    first_field=$(echo "$line" | awk '{print $1}')  # Extrai o primeiro campo usando awk
+		first_field=$(echo "$line" | awk '{print $1}') # Extrai o primeiro campo usando awk
 		[[ "$line" = '#'* ]] && continue
 		while IFS=$'\t\n' LC_ALL=C read -r rg url location tier; do
 			region="$first_field"
@@ -566,7 +572,7 @@ sh_getMirrors() {
 			var="${var%%\/*}"
 			tier=$(echo "$tier" | tr -d '\r') # O caractere ^M representa a tecla Enter, ou seja, a quebra de linha no formato DOS/Windows
 			Amirrors+=(["$var"]="$url|$(sh_getRegion "$region")|$location|$tier")
-		done <<< "$line"
+		done <<<"$line"
 	done <"$MIRRORLIST"
 }
 
@@ -587,8 +593,7 @@ sh_choosemirror() {
 	local mirror1
 	local mirror2
 
-	Amirrors+=([void.chililinux.com_2]="https://void.chililinux.com/voidlinux/|South and Central America|Pimenta Bueno, Brazil|2|")
-	Amirrors+=([chililinux.com/void]="https://chililinux.com/void/|South and Central America|Hostinger, Brazil|2|")
+	Amirrors+=([void.chililinux.com_https]="https://void.chililinux.com/voidlinux/|South and Central America|Pimenta Bueno, Brazil|2|")
 	while true; do
 		array=()
 		sorted_list=$(for key in "${!Amirrors[@]}"; do echo "$key|${Amirrors[$key]}"; done | sort -t\| -k5 -k3)
@@ -603,16 +608,17 @@ sh_choosemirror() {
 			"${Aflag[$key]}")
 		done <<<"${sorted_list[@]}"
 
-		mirror=$(${DIALOG} --title "${cmsg_Espelho[LC_DEFAULT]}" \
+		mirror=$(${DIALOG} \
+			--title "${cmsg_Espelho}" \
 			--backtitle "$ccabec" \
 			--default-item "${_MIRROR}" \
 			--colors \
 			--clear \
-			--cancel-label "${cmsg_Sair[$LC_DEFAULT]}" \
-			--ok-label "${cmsg_Aceitar[$LC_DEFAULT]}" \
+			--cancel-label "${cmsg_Sair}" \
+			--ok-label "${cmsg_Aceitar}" \
 			--extra-button --extra-label "void-testmirror" \
-			--checklist "${cmsg_LABEL[$LC_DEFAULT]}" \
-			0 0 0 "${array[@]}" 2>&1 >/dev/tty)
+			--checklist "${cmsg_LABEL}" \
+			22 0 $((MAXCOL - 2)) "${array[@]}" 2>&1 >/dev/tty)
 
 		exit_status=$?
 		case $exit_status in
@@ -623,13 +629,13 @@ sh_choosemirror() {
 			oldgrafico=$grafico
 			grafico=$true
 			if [[ -n $(command -v void-testmirror) || -n $(command -v ./void-testmirror) ]]; then
-				msg "$(gettext "=== ESPELHO ===") void-testmirror" "$(log_info_msg "$(gettext "Aguarde...") ${cmsg_Gerando[$LC_DEFAULT]} $(gettext "testando com") void-mirror ${xurl}")"
+				msg "$(gettext "=== ESPELHO ===") void-testmirror" "$(log_info_msg "$(gettext "Aguarde...") ${cmsg_Gerando} $(gettext "testando com") void-mirror ${xurl}")"
 				result=$(void-testmirror --nocolor --ping --quiet)
 				evaluate_retval "$?" "$err_not_fatal"
 				[[ -z "$result" ]] && result="${RED}ERRO DESCONHECIDO: void-testmirror $(gettext "não retornou resultado")${RESET}"
 				info "$(gettext "=== ESPELHO ===") void-testmirror" "\n${BOLD}${WHITE}$result"
 			else
-				msg "INFO" "$(log_info_msg "$(gettext "Aguarde...") ${cmsg_Gerando[$LC_DEFAULT]} $(gettext "testando com") void-mirror ${xurl}")"
+				msg "INFO" "$(log_info_msg "$(gettext "Aguarde...") ${cmsg_Gerando} $(gettext "testando com") void-mirror ${xurl}")"
 				evaluate_retval "1" "$err_not_fatal"
 				info "$(gettext "=== ESPELHO ===") void-testmirror" "\n${RED}void-testmirror $(gettext "não foi localizado no") \$PATH${RESET}" \
 					"${RED}void-testmirror $(gettext "não foi localizado em") $PWD!${RESET}"
@@ -642,7 +648,7 @@ sh_choosemirror() {
 		mirror0=${_MIRROR[0]}
 		mirror1=${_MIRROR[1]}
 		mirror2=${_MIRROR[2]}
-		if conf "${cmsg_Espelho[LC_DEFAULT]}" \
+		if conf "${cmsg_Espelho}" \
 			"\n${BOLD}${CYAN}Mirror     : $mirror0 | $mirror1 | $mirror2" \
 			"\n${BOLD}${CYAN}Url Mirror : $(sh_splitarray "${Amirrors[$mirror0]}" 1) | $(sh_splitarray "${Amirrors[$mirror1]}" 1) | $(sh_splitarray "${Amirrors[$mirror2]}" 1)" \
 			"\n${BOLD}${CYAN}Region     : $(sh_splitarray "${Amirrors[$mirror0]}" 2) | $(sh_splitarray "${Amirrors[$mirror1]}" 2) | $(sh_splitarray "${Amirrors[$mirror2]}" 2)" \
@@ -650,22 +656,23 @@ sh_choosemirror() {
 			"\n${RED}$(gettext "Deseja definir/alterar o espelho deste host para o(s) escolhido(s) ?")${RESET}\n\n"; then
 
 			mkdir -p "/etc/xbps.d/"
-			mv -f "${main_file}" "${main_file}.old"
-			#			echo "" > "${main_file}"
+			mv -f "${main_file}" "${main_file}.old" || true
 			for i in "${_MIRROR[@]}"; do
 				url_mirror="$(sh_splitarray "${Amirrors[$i]}" 1)"
 				clocation="$(sh_splitarray "${Amirrors[$i]}" 3)"
-				msg "INFO" "$(log_info_msg "${cmsg_Configurando[$LC_DEFAULT]}: ${main_file}")"
-				{
-					echo repository="${url_mirror}current"
-					[[ "$clocation" =~ .*Pimenta* ]] && echo repository="${url_mirror}current/extras"
-					[[ "$clocation" =~ .*Hostinger* ]] && continue
-					echo repository="${url_mirror}current/nonfree"
-					echo repository="${url_mirror}current/multilib"
-					echo repository="${url_mirror}current/multilib/nonfree"
-					echo
-				} >>"${main_file}"
-				# evaluate_retval "$?"
+				msg "INFO" "$(log_info_msg "${cmsg_Configurando}: ${main_file}")"
+
+				if [[ -n "$url_mirror" ]]; then
+					{
+						echo repository="${url_mirror}current"
+#						[[ "$clocation" =~ .*Pimenta* ]] && echo repository="${url_mirror}current/extras"
+						[[ "$clocation" =~ .*Hostinger* ]] && continue
+						echo "#repository=${url_mirror}current/nonfree"
+						echo "#repository=${url_mirror}current/multilib"
+						echo "#repository=${url_mirror}current/multilib/nonfree"
+						echo
+					} >>"${main_file}"
+				fi
 			done
 			sh_sync_mirrors
 		fi
@@ -678,9 +685,15 @@ sh_download_mirrors_list() {
 		command -v "$1" >/dev/null 2>&1 || oops "você não tem '$1' instalado, que é preciso para $2"
 	}
 	if command -v curl >/dev/null 2>&1; then
-		cmdfetch() { curl --compressed --silent --continue-at - --insecure -L "$1" -o "$2"; return $?; }
+		cmdfetch() {
+			curl --compressed --silent --continue-at - --insecure -L "$1" -o "$2"
+			return $?
+		}
 	elif command -v wget >/dev/null 2>&1; then
-		cmdfetch() { wget --quiet -c "$1" -O "$2"; return $?; }
+		cmdfetch() {
+			wget --quiet -c "$1" -O "$2"
+			return $?
+		}
 	else
 		require_util curl "downloader"
 		require_util wget "downloader"
@@ -691,7 +704,7 @@ sh_download_mirrors_list() {
 		alerta "$(gettext "BAIXAR LISTA DE ESPELHOS")" \
 			"\n${RED}${REVERSE}$(gettext "Verifique sua conexão com a internet")${RESET}" \
 			"$(gettext "Incapaz de buscar uma nova lista de espelhos de") : ${BLUE}${REVERSE}$MIRRORURL${RESET}" \
-  			"$(gettext "Tentando usar a lista local")                     : ${BLUE}${REVERSE}$MIRRORLIST"
+			"$(gettext "Tentando usar a lista local")                     : ${BLUE}${REVERSE}$MIRRORLIST"
 		return 1
 	fi
 	return 0
@@ -719,8 +732,8 @@ sh_splitarray() {
 
 sh_sync_mirrors() {
 	xbps-install -S | $DIALOG \
-		--backtitle "$ccabec - ${cmsg_Atualizando[LC_DEFAULT]}" \
-		--title "${cmsg_Atualizando[LC_DEFAULT]}" \
+		--backtitle "$ccabec - ${cmsg_Atualizando}" \
+		--title "${cmsg_Atualizando}" \
 		--programbox 20 110
 	exit 0
 }
@@ -731,46 +744,43 @@ sh_language() {
 	#	#echo "lang       ${#lang[@]} ${lang[@]} ${lang[$PT_BR]} ${lang[$EN_US]}"
 	#	#echo "cmsg_ERRO ${#cmsg_ERRO[@]} ${cmsg_ERRO[@]} ${cmsg_ERRO[$PT_BR]} ${cmsg_ERRO[$EN_US]}"
 
-	cmsg_operRoot[pt_BR]=$(gettext "erro: você não pode realizar esta operação a menos que seja root.")
-	cmsg_ERRO[pt_BR]=$(gettext "ERRO")
-	cmsg_CommandNotFound[pt_BR]=$(gettext "não encontrei o comando")
-	cmsg_ImpossivelContinuar[pt_BR]=$(gettext "IMPOSSÍVEL CONTINUAR")
-	cmsg_ImpossivelContinuar1[pt_BR]=$(gettext "Esse script precisa dos comandos listados acima")
-	cmsg_ImpossivelContinuar2[pt_BR]=$(gettext "Instale-os e/ou verifique se estão no seu")
-	cmsg_InstCommand[pt_BR]=$(gettext "Instalar o(s) comando(s)")
-	cmsg_RunNew[pt_BR]=$(gettext "INFO: Rode novamente o aplicativo")
-	cmsg_RunNewErro[pt_BR]=$(gettext "ERRO na instalação dos comandos. Tente manualmente.")
-	cmsg_InstalacaoAbortada[pt_BR]=$(gettext "Instalação abortada")
-	cmsg_ok[pt_BR]=$(gettext "Ok")
-	cmsg_Aceitar[pt_BR]=$(gettext "Aceitar")
-	cmsg_Sair[pt_BR]=$(gettext "Sair")
-	cmsg_yeslabel[pt_BR]=$(gettext "Sim")
-	cmsg_nolabel[pt_BR]=$(gettext "Não")
-	cmsg_Gerando[pt_BR]=$(gettext "Gerando")
-	cmsg_Atualizando[pt_BR]=$(gettext "Atualizando espelhos...")
-	cmsg_LABEL1[pt_BR]=$(gettext "Usar as setas ↑ e ↓ para navegar.")
-	cmsg_LABEL2[pt_BR]=$(gettext "Usar TAB para alternar entre os botões.")
-	cmsg_LABEL3[pt_BR]=$(gettext "Usar ENTER ou BARRA DE ESPAÇO para selecionar e aceitar.")
-	cmsg_LABEL[pt_BR]="${cmsg_LABEL1[pt_BR]}\n${cmsg_LABEL2[pt_BR]}\n${cmsg_LABEL3[pt_BR]}"
-	cmsg_Configurando[pt_BR]=$(gettext "Configurando espelho em")
-	cmsg_Espelho[pt_BR]=$(gettext "=== ESPELHO ===")
+	cmsg_operRoot=$(gettext "erro: você não pode realizar esta operação a menos que seja root.")
+	cmsg_ERRO=$(gettext "ERRO")
+	cmsg_CommandNotFound=$(gettext "não encontrei o comando")
+	cmsg_ImpossivelContinuar=$(gettext "IMPOSSÍVEL CONTINUAR")
+	cmsg_ImpossivelContinuar1=$(gettext "Esse script precisa dos comandos listados acima")
+	cmsg_ImpossivelContinuar2=$(gettext "Instale-os e/ou verifique se estão no seu")
+	cmsg_InstCommand=$(gettext "Instalar o(s) comando(s)")
+	cmsg_RunNew=$(gettext "INFO: Rode novamente o aplicativo")
+	cmsg_RunNewErro=$(gettext "ERRO na instalação dos comandos. Tente manualmente.")
+	cmsg_InstalacaoAbortada=$(gettext "Instalação abortada")
+	cmsg_ok=$(gettext "Ok")
+	cmsg_Aceitar=$(gettext "Aceitar")
+	cmsg_Sair=$(gettext "Sair")
+	cmsg_yeslabel=$(gettext "Sim")
+	cmsg_nolabel=$(gettext "Não")
+	cmsg_Gerando=$(gettext "Gerando")
+	cmsg_Atualizando=$(gettext "Atualizando espelhos...")
+	cmsg_LABEL1=$(gettext "Usar as setas ↑ e ↓ para navegar.")
+	cmsg_LABEL2=$(gettext "Usar TAB para alternar entre os botões.")
+	cmsg_LABEL3=$(gettext "Usar ENTER ou BARRA DE ESPAÇO para selecionar e aceitar.")
+	cmsg_LABEL="${cmsg_LABEL1}\n${cmsg_LABEL2}\n${cmsg_LABEL3}"
+	cmsg_Configurando=$(gettext "Configurando espelho em")
+	cmsg_Espelho=$(gettext "=== ESPELHO ===")
 }
 
-sh_ambiente
-sh_getlocale
+sh_setEnvironment
 sh_language
 sh_setvarcolors
-sh_ascii_lines
 sh_logprefix
 sh_checkDependencies
-sh_check_mirror_path
 sh_disableprintk
 [[ "$1" = @(-V|-v|version|-version|--version) ]] && {
 	sh_version
 	exit $(($# ? 0 : 1))
 }
-#sh_main "$@"
 sh_checkroot
+sh_check_mirror_path
 sh_download_mirrors_list
 sh_getMirrors
 sh_choosemirror "$@"
