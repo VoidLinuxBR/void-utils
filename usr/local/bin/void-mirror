@@ -40,7 +40,7 @@ export PS4=$'${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
 
 #system
 readonly APP="${0##*/}"
-readonly _VERSION_='1.1.30-20240308'
+readonly _VERSION_='3.1.18-20260118'
 readonly DEPENDENCIES=(wget curl dialog cat sed grep printf)
 declare -gA Aidioma=([pt_BR]=0 [en_US]=1 [de_DE]=2 [fr_FR]=3 [es_ES]=4 [it_IT]=5)
 declare -gA Alocale=([0]=pt_BR [1]=en_US [2]=de_DE [3]=fr_FR [4]=es_ES [5]=it_IT)
@@ -196,6 +196,112 @@ sh_setEnvironment() {
 	sh_ascii_lines
 }
 
+sh_check_terminal() { [ ! -t 1 ] && use_color=false; }
+
+set_varcolors() {
+  sh_check_terminal
+  # does the terminal support true-color?
+  if [[ -n "$(command -v "tput")" ]]; then
+    #tput setaf 127 | cat -v  #capturar saida
+    : "${RED=$(tput bold)$(tput setaf 196)}"
+    : "${GREEN=$(tput bold)$(tput setaf 2)}"
+    : "${YELLOW=$(tput bold)$(tput setaf 3)}"
+    : "${BLUE=$(tput setaf 4)}"
+    : "${PURPLE=$(tput setaf 125)}"
+    : "${CYAN=$(tput setaf 6)}"
+    : "${NC=$(tput sgr0)}"
+    : "${RESET=$(tput sgr0)}"
+    : "${BOLD=$(tput bold)}"
+    : "${black=$(tput bold)$(tput setaf 0)}"
+    : "${reverse=$(tput rev)}"
+    : "${branca=${black}$(tput setab 7)}"
+
+    : "${reset=$(tput sgr0)}"
+    : "${rst=$(tput sgr0)}"
+    : "${bold=$(tput bold)}"
+    : "${underline=$(tput smul)}"
+    : "${nounderline=$(tput rmul)}"
+    : "${reverse=$(tput rev)}"
+
+    : "${black=$(tput bold)$(tput setaf 0)}"
+    : "${red=$(tput bold)$(tput setaf 196)}"
+    : "${green=$(tput bold)$(tput setaf 2)}"
+    : "${yellow=$(tput bold)$(tput setaf 3)}"
+    : "${blue=$(tput setaf 27)}"
+    : "${pink=$(tput setaf 5)}"
+    : "${magenta=$(tput setaf 5)}"
+    : "${cyan=$(tput setaf 6)}"
+    : "${white=$(tput setaf 7)}"
+    : "${gray=$(tput setaf 8)}"
+    : "${light_red=$(tput setaf 9)}"
+    : "${light_green=$(tput setaf 10)}"
+    : "${light_yellow=$(tput setaf 11)}"
+    : "${light_blue=$(tput setaf 12)}"
+    : "${light_magenta=$(tput setaf 13)}"
+    : "${light_cyan=$(tput setaf 14)}"
+    : "${light_white=$(tput setaf 15)}"
+    : "${orange=$(tput setaf 202)}"
+    : "${purple=$(tput setaf 125)}"
+    : "${violet=$(tput setaf 61)}"
+
+    # Definir cores de fundo
+    : "${preto=$(tput setab 0)}"
+    : "${vermelho=$(tput setab 196)}"
+    : "${verde=$(tput setab 2)}"
+    : "${amarelo=$(tput setab 3)}"
+    : "${azul=$(tput setab 20)}"
+    : "${roxo=$(tput setab 5)}"
+    : "${ciano=$(tput setab 6)}"
+    : "${branca="${black}$(tput setab 7)"}"
+    : "${cinza=$(tput setab 8)}"
+    : "${laranja=$(tput setab 202)}"
+    : "${roxa=$(tput setab 125)}"
+    : "${violeta=$(tput setab 61)}"
+
+    : "${COL_NC='\e[0m'}" # No Color
+    : "${COL_LIGHT_GREEN='\e[1;32m'}"
+    : "${COL_LIGHT_RED='\e[1;31m'}"
+    : "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
+    : "${OVER="\\r\\033[K"}"
+    : "${DOTPREFIX="  ${black}::${reset} "}"
+    : "${clrkey=${light_white}}"
+    : "${TICK="${clrkey}[${green}✓✓✓${clrkey}]${rst}"}"
+    : "${CROSS="${clrkey}[${red}✗✗✗${clrkey}]${rst}"}"
+    : "${MID="${clrkey}[${red}✗✗${green}✓${clrkey}]${rst}"}"
+    : "${WARN="${clrkey}[${yellow}⚠  ${clrkey}]${yellow}"}"
+    : "${INFO="${clrkey}[${yellow}➡  ${clrkey}]${rst}"}"
+
+    # dialog colors
+    REVERSE="\Zr"
+    UNDERLINE="\Zu"
+    BOLD="\Zb"
+    RESET="\Zn"
+    BLACK="\Z0"
+    YELLOW="\Z3"
+    AMARELO="\Zb\Z3"
+    WHITE="\Z7"
+    BLUE="\Z4"
+    AZUL="\Zb\Z4"
+    CYAN="\Z6"
+    RED="\Z1"
+    GREEN="\Z2"
+    MAGENTA="\Z5"
+  else
+    unset_varcolors
+  fi
+}
+
+unset_varcolors() {
+  unset RED GREEN YELLOW BLUE PURPLE CYAN NC RESET BOLD
+  unset reset rst bold underline nounderline reverse
+  unset black red green yellow blue magenta cyan white gray orange purple violet
+  unset light_red light_green light_yellow light_blue light_magenta light_cyan light_white
+  unset preto vermelho verde amarelo azul roxo ciano branca cinza laranja roxa violeta
+  TICK="${white}[${verde}✓${rst}${white}]${rst}"
+  CROSS="${white}[${roxa}✗${rst}${white}]${rst}"
+  INFO="${white}[${cinza}i${rst}${white}]${rst}"
+}
+
 sh_check_mirror_path() {
 	msg "MIRROR PATH" "$(gettext "verificando caminho") $MIRRORPATH"
 	if ! test -d "${MIRRORPATH}"; then
@@ -224,9 +330,21 @@ sh_ascii_lines() {
 }
 
 sh_checkroot() {
-	if [ "$(id -u)" != "0" ]; then
-		die "${red} ${cmsg_operRoot}"
-	fi
+  (( EUID != 0 )) && elevate_to_root "$@" || return 0
+}
+
+elevate_to_root() {
+  log_err "This script must be run as root. Elevating privileges..."
+  ccabec+='root [elevated]'
+  # Tenta usar sudo primeiro (caso esteja configurado)
+  if command -v sudo >/dev/null 2>&1; then
+    exec sudo bash "$0" "$@"
+  fi
+  # Se sudo falhar, tenta su
+  if command -v su >/dev/null 2>&1; then
+    exec su -c "$0 $*"
+  fi
+  die "Error: Unable to elevate privileges. Run manually as root."
 }
 
 sh_checkDependencies() {
@@ -257,46 +375,6 @@ sh_checkDependencies() {
 			die "${cmsg_ERRO}: ${cmsg_InstalacaoAbortada}..."
 		fi
 	fi
-}
-
-sh_setvarcolors() {
-	# does the terminal support true-color?
-	if [[ -n $(command -v "tput") ]]; then
-		#tput setaf 127 | cat -v  #capturar saida
-		tput sgr0 # reset colors
-		reset=$(tput sgr0)
-		bold=$(tput bold)
-		black=$(tput setaf 0)
-		red=$(tput setaf 1)
-		green=$(tput setaf 2)
-		yellow=$(tput bold)$(tput setaf 3)
-		blue=$(tput setaf 4)
-		pink=$(tput setaf 5)
-		cyan=$(tput setaf 6)
-		white=$(tput setaf 7)
-		orange=$(tput setaf 3)
-		purple=$(tput setaf 125)
-		violet=$(tput setaf 61)
-	else
-		reset="\e[0m"
-		bold="\e[1m"
-		italic="\e[3m"
-		underline="\e[4m"
-		red="\e[31m"
-		green="\e[32m"
-		yellow="\e[33m"
-		blue="\e[34m"
-		pink="\e[35m"
-		cyan="\e[36m"
-		gray="\e[90m"
-		white="\e[97m"
-	fi
-}
-
-sh_unsetvarcolors() {
-	unset reset green red bold blue cyan
-	unset orange pink white yellow purple violeta
-	sh_logprefix
 }
 
 sh_logprefix() {
@@ -331,6 +409,8 @@ DOT() {
 }
 
 msg() {
+    local ctitle="$1"
+    shift
 	((++ncontador))
 	logmessage=$(sed 's/\\\033[^a-zA-Z]*.//g' <<<"$last_msg")
 	printf "%s\n" "$(timespec) [ INFO ]${2}" >>"$BOOTLOG"
@@ -339,9 +419,9 @@ msg() {
 		${DIALOG} \
 			--colors \
 			--no-collapse \
-			--title "$1" \
+			--title "$ctitle" \
 			--backtitle "$ccabec" \
-			--infobox "\n$2" \
+			--infobox "\n$*" \
 			8 60
 	else
 		log_info_msg "$(fmt) $2"
@@ -419,7 +499,7 @@ timespec() {
 	return 0
 }
 
-die() {
+dieOLD() {
 	if test $# -ge 2; then
 		evaluate_retval 1
 	fi
@@ -429,6 +509,23 @@ die() {
 	sh_enableprintk
 	exit 1
 }
+
+log_msg()          { echo -e "${INFO} ${*}${reset}"; }
+log_ok()       { echo -e "${TICK} ${*}${reset}"; }
+log_err()      { echo -e "${CROSS} ${*}${reset}"; }
+log_mid()      { echo -e "${MID} ${*}${reset}"; }
+log_warn()     { echo -e "${WARN} ${*}${reset}"; }
+msg_tab()      { echo -e "  ${INFO} ${*}${reset}"; }
+log_ok_tab()   { echo -e "  ${TICK} ${*}${reset}"; }
+log_err_tab()  { echo -e "  ${CROSS} ${*}${reset}"; }
+log_mid_tab()  { echo -e "  ${MID} ${*}${reset}"; }
+log_warn_tab() { echo -e "  ${WARN} ${*}${reset}"; }
+die() {
+  echo -e "${CROSS} ${red}${*}${reset}"
+    sh_enableprintk
+  exit 1
+}
+
 
 readconf() {
 	if [[ $LC_DEFAULT -eq 0 ]]; then
@@ -699,7 +796,7 @@ sh_download_mirrors_list() {
 		require_util wget "downloader"
 	fi
 
-	msg "$(gettext "BAIXAR LISTA DE ESPELHOS")" "$(gettext "buscando nova lista de espelhos em") ${MIRRORURL}"
+	msg "$(gettext "BAIXAR LISTA DE ESPELHOS")" "$(gettext "Buscando nova lista de espelhos em") ${MIRRORURL}"
 	if ! cmdfetch "$MIRRORURL" "$MIRRORLIST"; then
 		alerta "$(gettext "BAIXAR LISTA DE ESPELHOS")" \
 			"\n${RED}${REVERSE}$(gettext "Verifique sua conexão com a internet")${RESET}" \
@@ -770,8 +867,8 @@ sh_language() {
 }
 
 sh_setEnvironment
+set_varcolors
 sh_language
-sh_setvarcolors
 sh_logprefix
 sh_checkDependencies
 sh_disableprintk
