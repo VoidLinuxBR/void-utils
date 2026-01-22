@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+SV_DIR="/etc/sv"
+ACTIVE_DIR="/var/service"
+
+sh_checkroot() {
+  (( EUID != 0 )) && elevate_to_root "$@" || return 0
+}
+
+elevate_to_root() {
+#  echo "This script must be run as root. Elevating privileges..."
+  ccabec+='root [elevated]'
+  # Try sudo first (if available)
+  if command -v sudo >/dev/null 2>&1; then
+    exec sudo bash "$0" "$@"
+  fi
+  # If sudo fails, try su
+  if command -v su >/dev/null 2>&1; then
+    exec su -c "$0 $*"
+  fi
+  echo "Error: unable to elevate privileges. Run manually as root."
+  exit 1
+}
+
+usage() {
+    echo "usage: vservice {enable|disable|remove|start|stop|restart|status|list} service"
+    exit 1
+}
+
+if [[ $# -eq 1 && $1 == list ]]; then
+  : # ok
+elif [[ $# -eq 2 ]]; then
+  : # ok
+else
+  usage
+fi
+
+sh_checkroot "$@"
+
+ACTION="$1"
+SERVICE="$2"
+
+SV_PATH="$SV_DIR/$SERVICE"
+ACTIVE_PATH="$ACTIVE_DIR/$SERVICE"
+
+case "$ACTION" in
+enable)
+  if [ ! -d "$SV_PATH" ]; then
+    echo "error: service '$SERVICE' does not exist in $SV_DIR"
+    exit 1
+  fi
+
+  if [ -L "$ACTIVE_PATH" ]; then
+    echo "service '$SERVICE' is already enabled"
+  else
+    ln -s "$SV_PATH" "$ACTIVE_PATH"
+    echo "service '$SERVICE' enabled"
+  fi
+  sv status "$SERVICE"
+  ;;
+
+disable)
+  if [ -L "$ACTIVE_PATH" ]; then
+    sv stop "$SERVICE"
+    echo "service '$SERVICE' disabled"
+  else
+    echo "service '$SERVICE' is not enabled"
+  fi
+  ;;
+
+remove)
+  if [ -L "$ACTIVE_PATH" ]; then
+    sv stop "$SERVICE"
+    rm -f "$ACTIVE_PATH"
+    echo "service '$SERVICE' removed"
+  else
+    echo "service '$SERVICE' is not enabled"
+  fi
+  ;;
+
+list)
+  sudo vsv
+  ;;
+
+start | stop | restart | status)
+  if [ ! -d "$SV_PATH" ]; then
+    echo "error: service '$SERVICE' does not exist"
+    exit 1
+  fi
+  sv "$ACTION" "$SERVICE"
+  ;;
+
+*)
+  usage
+  ;;
+esac
+
