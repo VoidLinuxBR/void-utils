@@ -330,18 +330,27 @@ debug() {
 # Funções auxiliares
 # ===================================================================
 run_cmd() {
+  local info="$1"
+  shift
   local cmd="$*"
 
   if [[ $DRYRUN -eq 1 ]]; then
     msg "${cyan}[DRY-RUN]${rst} ${cmd}"
   else
-    echo -e "  [⚙  ] ${cyan}${cmd}${rst}"
+    if $quiet; then
+        echo -e "  [⚙  ] ${yellow}$info${rst}"
+    else
+        echo -e -n "  [⚙  ] ${yellow}$info ${cyan}${cmd}${rst}"
+    fi
     # Executa o comando, falha se houver erro
     # Redireciona stderr para /dev/null apenas para mkdir -p e ummount -R
     if [[ "$cmd" =~ ^mkdir\ -p ]] || [[ "$cmd" =~ ^umount\ -R ]]; then
       eval "$cmd" &>/dev/null || true
     else
-      eval "$cmd" || log_warn_tab "Falha ao executar: $cmd"
+      eval "$cmd" &>/dev/null || die "Falha ao executar: $cmd"
+    fi
+    if ! $quiet; then
+        replicate
     fi
   fi
 }
@@ -451,34 +460,43 @@ set_varcolors
 #sh_checkroot "$@"
 
 ##########################################################################################################
+quiet=true
+
+run_cmd 'Instalando pacotes necessários' "
+    sudo xbps-install --update pulseaudio pavucontrol pasystray gst-plugins-bad1 gst-plugins-good1 gst-plugins-ugly1 gst-plugins-base1 alsa-plugins-pulseaudio alsa-utils
+"
 
 # LIMPEZA GLOBAL — remover qualquer autostart do sistema
 # (evita conflito com configuração do usuário)
 
-# remover PipeWire global
-sudo rm -f /etc/xdg/autostart/pipewire.desktop
-sudo rm -f /etc/xdg/autostart/pipewire-pulse.desktop
-sudo rm -f /etc/xdg/autostart/wireplumber.desktop
+run_cmd 'remover PipeWire global' "
+    sudo rm -f /etc/xdg/autostart/pipewire.desktop
+    sudo rm -f /etc/xdg/autostart/pipewire-pulse.desktop
+    sudo rm -f /etc/xdg/autostart/wireplumber.desktop
+"
 
-# remover PulseAudio global
-sudo rm -f /etc/xdg/autostart/pulseaudio.desktop
-sudo rm -f /etc/xdg/autostart/pulseaudio-kde.desktop
+run_cmd 'remover PulseAudio global' "
+    sudo rm -f /etc/xdg/autostart/pulseaudio.desktop
+    sudo rm -f /etc/xdg/autostart/pulseaudio-kde.desktop
+"
 
-# remover qualquer config ALSA global que redirecione áudio
-sudo rm -f /etc/alsa/conf.d/50-pipewire.conf
-sudo rm -f /etc/alsa/conf.d/99-pipewire-default.conf
-sudo rm -f /etc/alsa/conf.d/50-pulseaudio.conf
+run_cmd 'remover qualquer config ALSA global que redirecione áudio' "
+    sudo rm -f /etc/alsa/conf.d/50-pipewire.conf
+    sudo rm -f /etc/alsa/conf.d/99-pipewire-default.conf
+    sudo rm -f /etc/alsa/conf.d/50-pulseaudio.conf
+"
 
 ############################################################
 # PULSEAUDIO — configuração completa (usuário + ALSA)
 ############################################################
 
-# criar diretórios necessários
-mkdir -p ~/.config/autostart
-mkdir -p ~/.config/alsa/conf.d
+run_cmd 'criar diretórios necessários' "
+    mkdir -p ~/.config/autostart
+    mkdir -p ~/.config/alsa/conf.d
+"
 
-# ---- autostart do PulseAudio ----
-cat > ~/.config/autostart/pulseaudio.desktop <<EOF
+run_cmd '---- autostart do PulseAudio ----' "
+    cat > ~/.config/autostart/pulseaudio.desktop <<EOF
 [Desktop Entry]
 Type=Application
 Exec=pulseaudio --start
@@ -487,11 +505,13 @@ NoDisplay=false
 X-GNOME-Autostart-enabled=true
 Name=PulseAudio
 EOF
+"
 
-# remover autostart do PipeWire (evitar conflito)
-rm -f ~/.config/autostart/pipewire.desktop
-rm -f ~/.config/autostart/pipewire-pulse.desktop
-rm -f ~/.config/autostart/wireplumber.desktop
-
-# ---- integração ALSA → PulseAudio ----
-ln -sf /usr/share/alsa/alsa.conf.d/50-pulseaudio.conf ~/.config/alsa/conf.d/50-pulseaudio.conf
+run_cmd 'remover autostart do PipeWire (evitar conflito)' "
+    rm -f ~/.config/autostart/pipewire.desktop
+    rm -f ~/.config/autostart/pipewire-pulse.desktop
+    rm -f ~/.config/autostart/wireplumber.desktop
+"
+run_cmd '---- integração ALSA → PulseAudio ----' "
+    ln -sf /usr/share/alsa/alsa.conf.d/50-pulseaudio.conf ~/.config/alsa/conf.d/50-pulseaudio.conf
+"
