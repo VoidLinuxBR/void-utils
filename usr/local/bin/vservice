@@ -6,7 +6,7 @@
 #  Wrapper para o sv
 #  Created: 18.09.2022 15:10:00 -04
 #  Altered: sex 06 fev 2026 04:24:23 -04
-#  Updated: sex 06 fev 2026 04:24:23 -04
+#  Updated: sex 13 fev 2026 19:43:49 -04
 #
 #  Copyright (c) 2026-2026, Vilmar Catafesta <vcatafesta@gmail.com>
 #  Assembled By Vilmar Catafesta for the ChiliLinux project.
@@ -73,7 +73,7 @@ usage() {
   echo -e "${BLUE}vservice${RESET} — gerenciador simples de serviços (${YELLOW}runit${RESET})"
   echo
   echo -e "${GREEN}Uso:${RESET}"
-  echo -e "  ${BLUE}vservice${RESET} ${YELLOW}{enable|disable|remove|start|stop|restart|status|list}${RESET} ${GREEN}[service]${RESET}"
+  echo -e "  ${BLUE}vservice${RESET} ${YELLOW}{install|enable|disable|remove|rm||start|stop|st|restart|status|list}${RESET} ${GREEN}[service]${RESET}"
   echo
   echo -e "${GREEN}Comandos:${RESET}"
   echo -e "  ${YELLOW}enable${RESET}   — habilita o serviço (cria link em ${BLUE}/var/service${RESET})"
@@ -120,7 +120,7 @@ show_status() {
 # Ações
 # ─────────────────────────────
 case "$ACTION" in
-enable)
+enable|install)
   check_service_exists
 
   if [[ -L "$ACTIVE_PATH" ]]; then
@@ -143,7 +143,7 @@ disable)
   fi
 ;;
 
-remove)
+remove|rm)
   if [[ -L "$ACTIVE_PATH" ]]; then
     sv stop "$SERVICE"
     rm -f "$ACTIVE_PATH"
@@ -153,7 +153,7 @@ remove)
   fi
 ;;
 
-start)
+start|st)
   check_service_exists
 
   if [[ ! -L "$ACTIVE_PATH" ]]; then
