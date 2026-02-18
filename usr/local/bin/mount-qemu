@@ -1,0 +1,75 @@
+#!/bin/bash
+set -e
+
+IMG0="/home/vcatafesta/.chili-fr/vdisk/vda.qcow2"
+IMG1="/home/vcatafesta/.chili-fr/vdisk/vdb.qcow2"
+IMG2="/home/vcatafesta/.chili-fr/vdisk/vdc.qcow2"
+IMG3="/home/vcatafesta/.chili-fr/vdisk/vdd.qcow2"
+NBD0="/dev/nbd0"
+NBD1="/dev/nbd1"
+NBD2="/dev/nbd2"
+NBD3="/dev/nbd3"
+
+sh_loadmodules() {
+   sudo modprobe -r nbd 2>/dev/null || true
+   sudo modprobe nbd max_part=4
+}
+
+sh_connect() {
+   sudo qemu-nbd -v --fork --connect="$NBD0" "$IMG0"
+   sudo qemu-nbd -v --fork --connect="$NBD1" "$IMG1"
+   sudo qemu-nbd -v --fork --connect="$NBD2" "$IMG2"
+   sudo qemu-nbd -v --fork --connect="$NBD3" "$IMG3"
+
+   sudo partprobe "$NBD0"
+   sudo partprobe "$NBD1"
+   sudo partprobe "$NBD2"
+   sudo partprobe "$NBD3"
+   sudo udevadm settle
+
+   # lsblk | grep nbd
+   sudo ps -ef | grep qemu-nbd | grep -v grep
+
+#   for d in /sys/block/nbd*; do
+#     printf "%s: " "$(basename "$d")"
+#     cat "$d/size"
+#   done
+
+   lsblk -Ao NAME,PATH,SIZE,TRAN,MODEL,LABEL,SERIAL,PTTYPE | grep nbd
+}
+
+sh_disconnect() {
+   sudo umount -R ${NBD0}* 2>/dev/null || true
+   sudo umount -R ${NBD1}* 2>/dev/null || true
+   sudo umount -R ${NBD2}* 2>/dev/null || true
+   sudo umount -R ${NBD3}* 2>/dev/null || true
+
+   sudo qemu-nbd --disconnect "$NBD0" 2>/dev/null || true
+   sudo qemu-nbd --disconnect "$NBD1" 2>/dev/null || true
+   sudo qemu-nbd --disconnect "$NBD2" 2>/dev/null || true
+   sudo qemu-nbd --disconnect "$NBD3" 2>/dev/null || true
+   sudo ps -ef | grep qemu-nbd | grep -v grep
+}
+
+sh_copia() {
+   sudo dd if=/dev/nbd0 of=/dev/sdX status=progress conv=fsync
+}
+
+usage() {
+   echo "Uso: $0 {on|off}"
+   exit 1
+}
+
+case "$1" in
+   on)
+#     sh_disconnect
+      sh_loadmodules
+      sh_connect
+      ;;
+   off)
+      sh_disconnect
+      ;;
+   *)
+      usage
+      ;;
+esac
