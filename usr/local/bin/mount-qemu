@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-IMG0="/home/vcatafesta/.chili-fr/vdisk/vda.qcow2"
-IMG1="/home/vcatafesta/.chili-fr/vdisk/vdb.qcow2"
-IMG2="/home/vcatafesta/.chili-fr/vdisk/vdc.qcow2"
-IMG3="/home/vcatafesta/.chili-fr/vdisk/vdd.qcow2"
+IMG0="$HOME/.chili-fr/vdisk/vda.qcow2"
+IMG1="$HOME/.chili-fr/vdisk/vdb.qcow2"
+IMG2="$HOME/.chili-fr/vdisk/vdc.qcow2"
+IMG3="$HOME/.chili-fr/vdisk/vdd.qcow2"
 NBD0="/dev/nbd0"
 NBD1="/dev/nbd1"
 NBD2="/dev/nbd2"
