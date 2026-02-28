@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Disparar build remoto
         run: |
-          echo "Repo atual: ${{ github.event.repository.name }}"
+          echo "Repo atual completo: ${{ github.repository }}"
 
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.ORGANIZATION_TOKEN }}" \
@@ -27,6 +27,6 @@ jobs:
             -d "{
               \"event_type\": \"webhook\",
               \"client_payload\": {
-                \"package\": \"${{ github.event.repository.name }}\"
+                \"repository\": \"${{ github.repository }}\"
               }
             }"
