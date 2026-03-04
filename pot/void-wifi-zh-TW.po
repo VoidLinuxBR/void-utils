@@ -1,0 +1,101 @@
+# Language zh-TW translations for PACKAGE package.
+# Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-11 21:12-0400\n"
+"PO-Revision-Date: 2026-01-11 21:12-0400\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: zh-TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: void-wifi:88
+msgid "Interrompido! Saindo..."
+msgstr "被打擾了！離開..."
+
+#: void-wifi:120
+msgid "Removendo arquivos temporários..."
+msgstr "正在刪除臨時文件..."
+
+#: void-wifi:127
+msgid "Ajustando"
+msgstr "調整"
+
+#: void-wifi:168
+msgid "erro: você não pode executar esta operação a menos que seja root."
+msgstr "錯誤：除非您是 root，否則無法執行此操作。"
+
+#: void-wifi:182 void-wifi:185
+msgid "IMPOSSÍVEL CONTINUAR"
+msgstr "無法繼續"
+
+#: void-wifi:183
+msgid "Este script precisa dos comandos listados acima"
+msgstr "該腳本需要上面列出的命令"
+
+#: void-wifi:184
+msgid "Instale-os e/ou verifique se eles estão em seu"
+msgstr "安裝它們和/或確保它們在您的"
+
+#: void-wifi:189
+msgid "Instalar commando(s)"
+msgstr "安裝命令"
+
+#: void-wifi:191
+msgid "INFO: Execute o aplicativo novamente"
+msgstr "信息：再次運行應用程序"
+
+#: void-wifi:193
+msgid "ERRO ao instalar comandos. Tente manualmente."
+msgstr "安裝命令時出錯。手動嘗試。"
+
+#: void-wifi:242
+msgid "Instalando pacote"
+msgstr "安裝包"
+
+#: void-wifi:243
+msgid "Ativando serviço"
+msgstr "啟動服務"
+
+#: void-wifi:244
+msgid "Reiniciando serviço"
+msgstr "重啟服務"
+
+#: void-wifi:257
+msgid "Verificando redes wifi"
+msgstr "檢查 wifi 網絡"
+
+#: void-wifi:260
+msgid "A varredura não retornou nenhum resultado."
+msgstr "掃描沒有返回結果。"
+
+#: void-wifi:261
+msgid "Aparentemente, o serviço wpa_supplicant não está em execução."
+msgstr "顯然 wpa_supplicant 服務沒有運行。"
+
+#: void-wifi:263
+msgid "Tente o seguinte"
+msgstr "嘗試以下操作"
+
+#: void-wifi:264
+msgid "1-Use a opção Serviços no menu para ativar."
+msgstr "1-使用菜單中的“服務”選項進行激活。"
+
+#: void-wifi:265
+msgid "2-Verifique se existe um dispositivo wifi conectado à máquina."
+msgstr "2-檢查是否有WiFi設備連接到機器。"
+
+#: void-wifi:309
+msgid "=== REDE WI-FI ==="
+msgstr "=== 重新連接 WI-FI =="
+
+#: void-wifi:329
+msgid "Configurações feitas. Prosseguindo com a instalação."
+msgstr "設置完成。繼續安裝。"
