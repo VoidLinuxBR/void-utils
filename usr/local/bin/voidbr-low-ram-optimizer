@@ -352,6 +352,7 @@ sh_copyright() {
 		${bold}${cyan}${0##*/} v${_VERSION_}${rst}
 		${bold}${cyan}${APPDESC}${rst}
 		${bold}${orange}Copyright (c) 2019-2026, ${reset}ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>
+		${bold}${orange}Copyright (c) 2019-2026, ${reset}VoidBR Development Team <https://voidbr.org> <https://github.com/voidlinuxbr>
 		${bold}${orange}Copyright (c) 2019-2026, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
 	EOF-COPY
 }
@@ -360,12 +361,12 @@ sh_version() {
 	cat <<-EOF-VERSION
 		  $(sh_copyright)
 
-		        $(gettext 'Este é um software livre: você é livre para alterá-lo e redistribuí-lo.')
-		        $(gettext 'O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e')
-		        $(gettext 'inclui software de código aberto sob uma variedade de outras licenças.')
-		        $(gettext 'Você pode ler instruções sobre como baixar e criar para você mesmo')
-		        $(gettext 'o código fonte específico usado para criar esta cópia.')
-		        ${red}$(gettext 'Este programa vem com absolutamente NENHUMA garantia.')${reset}
+		        $(gettext "Este é um software livre: você é livre para alterá-lo e redistribuí-lo.")
+		        $(gettext "O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e")
+		        $(gettext "inclui software de código aberto sob uma variedade de outras licenças.")
+		        $(gettext "Você pode ler instruções sobre como baixar e criar para você mesmo")
+		        $(gettext "o código fonte específico usado para criar esta cópia.")
+		        ${red}$(gettext "Este programa vem com absolutamente NENHUMA garantia.")${reset}
 	EOF-VERSION
 }
 
@@ -400,14 +401,17 @@ detect_distro() {
 }
 
 sh_checkDependencies() {
-	local DISTRO="$(detect_distro)"
 	local aBlock_files=()
 	local d
 	local pkg
 	local errorFound=false
 	declare -a missing
-	local cmsgNot="$(gettext "Não foi possível encontrar o comando")"
-	local cmsgPkg="$(gettext "instalar pacote")"
+	local DISTRO
+	local cmsgNot
+	local cmsgPkg
+	DISTRO="$(detect_distro)"
+	cmsgNot="$(gettext "Não foi possível encontrar o comando")"
+	cmsgPkg="$(gettext "instalar pacote")"
 
 	for d in "${!PACKAGEDEP[@]}"; do
 		if ! command -v "$d" &>/dev/null; then
@@ -436,7 +440,7 @@ sh_checkDependencies() {
 		if readconf "$(gettext "Instalar dependências base agora?")"; then
 			echo -e "${blue}::${rst} $(gettext "Preparando ambiente para") ${green}${DISTRO}${reset}..."
 			# Execução dinâmica: $cmd (gerenciador) + $pkgs (lista de pacotes)
-			if ! $cmd $pkgs; then
+			if ! $cmd "$pkgs"; then
 				echo
 				echo -e "${red}$(gettext "Erro Crítico:")${rst} $(gettext "A instalação dos pacotes básicos falhou.")"
 				exit 1
@@ -475,7 +479,6 @@ msg "Iniciando otimização do sistema..."
 # ---------------------------------------------------
 # 1. Criar swapfile
 # ---------------------------------------------------
-
 if [ ! -f /swapfile ]; then
 	msg "Criando swapfile (6G)..."
 	fallocate -l 8G /swapfile
@@ -496,7 +499,7 @@ fi
 # 2. Ajustes sysctl
 # ---------------------------------------------------
 msg "Configurando parâmetros de memória do kernel..."
-SYSCTL_FILE="/etc/sysctl.d/99-memory-tuning.conf"
+SYSCTL_FILE="/etc/sysctl.d/99-voidbr-memory-tuning.conf"
 mkdir -p /etc/sysctl.d
 cat <<EOF >"$SYSCTL_FILE"
 vm.swappiness=15
