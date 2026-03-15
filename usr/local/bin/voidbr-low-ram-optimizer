@@ -474,13 +474,45 @@ echo "--------------------------------------------"
 echo " VoidBR Low RAM Optimizer"
 echo "--------------------------------------------"
 echo -e "${reset}"
+
 msg "Iniciando otimização do sistema..."
 
 # ---------------------------------------------------
-# 1. Criar swapfile
+# 1. DESATIVAR ZRAM
+# ---------------------------------------------------
+msg "Verificando zram..."
+
+if command -v zramctl >/dev/null; then
+	if zramctl | grep -q "/dev/zram"; then
+		msg_warn "zram detectado — desativando"
+
+		for dev in $(zramctl -n -o NAME); do
+			swapoff "$dev" 2>/dev/null
+		done
+
+		modprobe -r zram 2>/dev/null
+	fi
+fi
+
+# ---------------------------------------------------
+# 2. REMOVER SCRIPT ANTIGO DE ZRAM
+# ---------------------------------------------------
+msg "Removendo configurações antigas de zram..."
+
+if [ -f /etc/runit/core-services/10-voidbr-zram.sh ]; then
+	msg_warn "Script antigo encontrado — removendo"
+	rm -f /etc/runit/core-services/10-voidbr-zram.sh
+fi
+
+# bloquear módulo
+mkdir -p /etc/modprobe.d
+echo "blacklist zram" >/etc/modprobe.d/disable-zram.conf
+
+# ---------------------------------------------------
+# 3. Criar swapfile
 # ---------------------------------------------------
 if [ ! -f /swapfile ]; then
-	msg "Criando swapfile (6G)..."
+	msg "Criando swapfile (8G)..."
 	fallocate -l 8G /swapfile
 	chmod 600 /swapfile
 	mkswap /swapfile
@@ -496,42 +528,54 @@ else
 fi
 
 # ---------------------------------------------------
-# 2. Ajustes sysctl
+# 4. Ajustes sysctl
 # ---------------------------------------------------
 msg "Configurando parâmetros de memória do kernel..."
+
 SYSCTL_FILE="/etc/sysctl.d/99-voidbr-memory-tuning.conf"
+
 mkdir -p /etc/sysctl.d
+
 cat <<EOF >"$SYSCTL_FILE"
-vm.swappiness=15
+vm.swappiness=180
 vm.vfs_cache_pressure=200
-vm.dirty_background_ratio=5
+vm.page-cluster=0
+vm.dirty_background_ratio=3
 vm.dirty_ratio=10
+vm.dirty_expire_centisecs=3000
+vm.dirty_writeback_centisecs=500
 EOF
+
 sysctl --system >/dev/null
 
 # ---------------------------------------------------
-# 3. Configurar ZRAM
+# 5. ATIVAR ZSWAP
 # ---------------------------------------------------
-msg "Configurando zram..."
-mkdir -p /etc/runit/core-services
-cat <<'EOF' >/etc/runit/core-services/10-voidbr-zram.sh
-#!/bin/sh
+msg "Configurando zswap..."
 
-modprobe zram
+if [ -f /etc/default/grub ]; then
 
-echo lz4 > /sys/block/zram0/comp_algorithm
-echo 1G > /sys/block/zram0/disksize
+	if ! grep -q "zswap.enabled" /etc/default/grub; then
+		sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="zswap.enabled=1 zswap.max_pool_percent=25 /' /etc/default/grub
+	fi
 
-mkswap /dev/zram0
-swapon -p 100 /dev/zram0
-EOF
+	if command -v update-grub >/dev/null; then
+		update-grub
+	elif command -v grub-mkconfig >/dev/null; then
+		grub-mkconfig -o /boot/grub/grub.cfg
+	fi
 
-chmod +x /etc/runit/core-services/10-voidbr-zram.sh
+else
+	msg_warn "GRUB não encontrado. Ative zswap manualmente."
+fi
 
 # ---------------------------------------------------
-# 4. Desativar THP
+# 6. Desativar THP
 # ---------------------------------------------------
 msg "Desativando Transparent Huge Pages..."
+
+mkdir -p /etc/runit/core-services
+
 cat <<'EOF' >/etc/runit/core-services/05-voidbr-thp.sh
 #!/bin/sh
 echo never > /sys/kernel/mm/transparent_hugepage/enabled
@@ -540,23 +584,27 @@ EOF
 chmod +x /etc/runit/core-services/05-voidbr-thp.sh
 
 # ---------------------------------------------------
-# 5. Scheduler BFQ
+# 7. Scheduler BFQ
 # ---------------------------------------------------
 msg "Configurando scheduler de disco (BFQ)..."
+
 cat <<'EOF' >/etc/runit/core-services/03-voidbr-bfq.sh
 #!/bin/sh
 
-echo bfq > /sys/block/sda/queue/scheduler
-echo 1 > /sys/block/sda/queue/iosched/low_latency
-echo 0 > /sys/block/sda/queue/iosched/slice_idle
+for disk in /sys/block/sd*; do
+	echo bfq > "$disk/queue/scheduler" 2>/dev/null
+	echo 1 > "$disk/queue/iosched/low_latency" 2>/dev/null
+	echo 0 > "$disk/queue/iosched/slice_idle" 2>/dev/null
+done
 EOF
 
 chmod +x /etc/runit/core-services/03-voidbr-bfq.sh
 
 # ---------------------------------------------------
-# 6. Ativar swaps agora
+# 8. Ativar swaps agora
 # ---------------------------------------------------
 msg "Ativando swaps..."
+
 swapon -a || msg_warn "algum swap já estava ativo."
 
 echo
