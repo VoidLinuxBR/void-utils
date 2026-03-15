@@ -281,7 +281,7 @@ sh_checkroot() {
 }
 
 elevate_to_root() {
-	log_err "This script must be run as root. Elevating privileges..."
+	msg "This script must be run as root. Elevating privileges..."
 	ccabec+='root [elevated]'
 	# Tenta usar sudo primeiro (caso esteja configurado)
 	if command -v sudo >/dev/null 2>&1; then
@@ -456,92 +456,121 @@ set_varcolors
 sh_checkroot "$@"
 
 ##########################################################################################################
-# ---------------------------------------------------
-# CORES
-# ---------------------------------------------------
-red='\033[1;31m'
-green='\033[1;32m'
-yellow='\033[1;33m'
-blue='\033[1;34m'
-reset='\033[0m'
-
-msg() { printf "${green}==>${reset} %s\n" "$1"; }
-msg_warn() { printf "${yellow}==> AVISO:${reset} %s\n" "$1"; }
-msg_err() { printf "${red}==> ERRO:${reset} %s\n" "$1"; }
-
-echo -e "${blue}"
-echo "--------------------------------------------"
-echo " VoidBR Low RAM Optimizer"
-echo "--------------------------------------------"
-echo -e "${reset}"
-
-msg "Iniciando otimização do sistema..."
+warn() { printf "${yellow}==> AVISO:${reset} %s\n" "$1"; }
+err() { printf "${red}==> ERRO:${reset} %s\n" "$1"; }
 
 # ---------------------------------------------------
-# 1. DESATIVAR ZRAM
+# ROOT
 # ---------------------------------------------------
-msg "Verificando zram..."
+
+if [[ $EUID -ne 0 ]]; then
+	err "Execute como root."
+	exit 1
+fi
+
+# ---------------------------------------------------
+# DETECTAR RAM
+# ---------------------------------------------------
+
+ram_gb=$(awk '/MemTotal/ {printf "%.0f", $2/1024/1024}' /proc/meminfo)
+msg "RAM detectada: ${ram_gb} GB"
+
+# ---------------------------------------------------
+# CALCULAR SWAP IDEAL
+# ---------------------------------------------------
+
+if ((ram_gb <= 2)); then
+	swap_gb=6
+elif ((ram_gb <= 4)); then
+	swap_gb=8
+elif ((ram_gb <= 8)); then
+	swap_gb=12
+else
+	swap_gb=$ram_gb
+fi
+
+msg "Swap recomendada: ${swap_gb} GB"
+
+# ---------------------------------------------------
+# REMOVER ZRAM
+# ---------------------------------------------------
+
+msg "Removendo zram..."
 
 if command -v zramctl >/dev/null; then
-	if zramctl | grep -q "/dev/zram"; then
-		msg_warn "zram detectado — desativando"
-
-		for dev in $(zramctl -n -o NAME); do
-			swapoff "$dev" 2>/dev/null
-		done
-
-		modprobe -r zram 2>/dev/null
-	fi
+	for dev in $(zramctl -n -o NAME 2>/dev/null); do
+		swapoff "$dev" 2>/dev/null
+	done
 fi
 
-# ---------------------------------------------------
-# 2. REMOVER SCRIPT ANTIGO DE ZRAM
-# ---------------------------------------------------
-msg "Removendo configurações antigas de zram..."
+modprobe -r zram 2>/dev/null
 
-if [ -f /etc/runit/core-services/10-voidbr-zram.sh ]; then
-	msg_warn "Script antigo encontrado — removendo"
-	rm -f /etc/runit/core-services/10-voidbr-zram.sh
-fi
+for f in \
+	/etc/runit/core-services/10-zram.sh \
+	/etc/runit/core-services/10-voidbr-zram.sh; do
+	[ -f "$f" ] && rm -f "$f"
+done
 
-if [ -f /etc/runit/core-services/10-zram.sh ]; then
-	msg_warn "Script antigo encontrado — removendo"
-	rm -f /etc/runit/core-services/10-zram.sh
-fi
-
-# bloquear módulo
 mkdir -p /etc/modprobe.d
 echo "blacklist zram" >/etc/modprobe.d/disable-zram.conf
 
 # ---------------------------------------------------
-# 3. Criar swapfile
+# CRIAR OU AJUSTAR SWAPFILE
 # ---------------------------------------------------
-if [ ! -f /swapfile ]; then
-	msg "Criando swapfile (8G)..."
-	fallocate -l 8G /swapfile
+
+desired_size=$((swap_gb * 1024 * 1024 * 1024))
+
+if [ -f /swapfile ]; then
+
+	current_size=$(stat -c%s /swapfile)
+
+	if [ "$current_size" -ne "$desired_size" ]; then
+
+		current_gb=$((current_size / 1024 / 1024 / 1024))
+
+		warn "Swap atual: ${current_gb}G"
+		warn "Swap recomendado: ${swap_gb}G"
+
+		swapoff /swapfile 2>/dev/null
+		rm -f /swapfile
+
+		msg "Recriando swapfile..."
+
+		if ! fallocate -l ${swap_gb}G /swapfile 2>/dev/null; then
+			dd if=/dev/zero of=/swapfile bs=1M count=$((swap_gb * 1024))
+		fi
+
+		chmod 600 /swapfile
+		mkswap /swapfile
+
+	else
+		msg "Swapfile já está no tamanho correto."
+	fi
+
+else
+
+	msg "Criando swapfile ${swap_gb}G..."
+
+	if ! fallocate -l ${swap_gb}G /swapfile 2>/dev/null; then
+		dd if=/dev/zero of=/swapfile bs=1M count=$((swap_gb * 1024))
+	fi
+
 	chmod 600 /swapfile
 	mkswap /swapfile
-else
-	msg_warn "swapfile já existe."
+
 fi
 
 if ! grep -q "/swapfile" /etc/fstab; then
-	msg "Adicionando swapfile ao fstab..."
 	echo "/swapfile none swap defaults,pri=20 0 0" >>/etc/fstab
-else
-	msg_warn "swapfile já está no fstab."
 fi
 
 # ---------------------------------------------------
-# 4. Ajustes sysctl
+# SYSCTL
 # ---------------------------------------------------
-msg "Configurando parâmetros de memória do kernel..."
 
-SYSCTL_FILE="/etc/sysctl.d/99-voidbr-memory-tuning.conf"
+msg "Aplicando tunagem de memória..."
 
-mkdir -p /etc/sysctl.d
-
-cat <<EOF >"$SYSCTL_FILE"
+cat <<EOF >/etc/sysctl.d/99-voidbr-memory-tuning.conf
 vm.swappiness=180
 vm.vfs_cache_pressure=200
 vm.page-cluster=0
@@ -554,30 +583,25 @@ EOF
 sysctl --system >/dev/null
 
 # ---------------------------------------------------
-# 5. ATIVAR ZSWAP
+# ZSWAP
 # ---------------------------------------------------
-msg "Configurando zswap..."
 
+msg "Configurando zswap no grub..."
 if [ -f /etc/default/grub ]; then
-
 	if ! grep -q "zswap.enabled" /etc/default/grub; then
-		sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="zswap.enabled=1 zswap.max_pool_percent=25 /' /etc/default/grub
+		sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="zswap.enabled=1 zswap.compressor=lzo zswap.max_pool_percent=25 /' /etc/default/grub
 	fi
 
 	if command -v update-grub >/dev/null; then
-		update-grub
-	elif command -v grub-mkconfig >/dev/null; then
-		grub-mkconfig -o /boot/grub/grub.cfg
+		update-grub &>/dev/null
+	else
+		grub-mkconfig -o /boot/grub/grub.cfg &>/dev/null
 	fi
-
-else
-	msg_warn "GRUB não encontrado. Ative zswap manualmente."
 fi
 
 # ---------------------------------------------------
-# 6. Desativar THP
+# THP
 # ---------------------------------------------------
-msg "Desativando Transparent Huge Pages..."
 
 mkdir -p /etc/runit/core-services
 
@@ -589,29 +613,70 @@ EOF
 chmod +x /etc/runit/core-services/05-voidbr-thp.sh
 
 # ---------------------------------------------------
-# 7. Scheduler BFQ
+# DETECTAR DISCO E TIPO (PRECISÃO) - v1.3.6
 # ---------------------------------------------------
-msg "Configurando scheduler de disco (BFQ)..."
 
-cat <<'EOF' >/etc/runit/core-services/03-voidbr-bfq.sh
+# 1. Obter o disco físico pai (independente de ser LVM/LUKS/Partição)
+root_partition=$(findmnt -n -o SOURCE /)
+disk=$(lsblk -no PKNAME "$root_partition" | tail -n1)
+
+# Se for partição (ex: sda1), limpa para o disco (ex: sda)
+disk=$(echo "$disk" | sed 's/p[0-9]\+$//; s/[0-9]\+$//')
+
+# Fallback para o primeiro disco se o findmnt falhar
+if [[ -z "$disk" ]]; then
+    disk=$(lsblk -ndo NAME,TYPE | awk '$2=="disk"{print $1;exit}')
+fi
+
+# 2. Lógica de detecção de tipo (Mecânico vs SSD/NVMe)
+is_rotational=$(cat /sys/block/"$disk"/queue/rotational 2>/dev/null)
+supports_discard=$(lsblk -no DISC-MAX "/dev/$disk" | awk '{print ($1!="0B" && $1!="") ? 1 : 0}')
+
+if [[ "$disk" == nvme* ]]; then
+    type="NVMe"
+    scheduler="none"
+elif [[ "$is_rotational" == "0" || "$supports_discard" == "1" ]]; then
+    # Se não roda OU se aceita TRIM (Discard), tratamos como SSD
+    type="SSD"
+    scheduler="mq-deadline"
+else
+    # Se roda E não tem TRIM, é HDD
+    type="HDD"
+    scheduler="bfq"
+fi
+
+msg "$type detectado ($disk)"
+
+# ---------------------------------------------------
+# APLICAR SCHEDULER (PERSISTENTE VIA RUNIT)
+# ---------------------------------------------------
+
+cat <<EOF > /etc/runit/core-services/03-voidbr-scheduler.sh
 #!/bin/sh
-
-for disk in /sys/block/sd*; do
-	echo bfq > "$disk/queue/scheduler" 2>/dev/null
-	echo 1 > "$disk/queue/iosched/low_latency" 2>/dev/null
-	echo 0 > "$disk/queue/iosched/slice_idle" 2>/dev/null
+# Configura o scheduler otimizado para $type
+for d in /sys/block/*; do
+    [ -e "\$d/queue/scheduler" ] && echo "$scheduler" > "\$d/queue/scheduler" 2>/dev/null
 done
 EOF
-
-chmod +x /etc/runit/core-services/03-voidbr-bfq.sh
+chmod +x /etc/runit/core-services/03-voidbr-scheduler.sh
 
 # ---------------------------------------------------
-# 8. Ativar swaps agora
+# ATIVAR SWAP
 # ---------------------------------------------------
-msg "Ativando swaps..."
+swapon -a
 
-swapon -a || msg_warn "algum swap já estava ativo."
+# ---------------------------------------------------
+# SUMÁRIO FINAL
+# ---------------------------------------------------
 
+replicate '-'
+echo "${blue}Resumo do sistema${rst}"
+replicate '-'
+msg_tab "RAM             : ${ram_gb} GB"
+msg_tab "Swap configurada: ${swap_gb} GB"
+msg_tab "zswap           : " $(cat /sys/module/zswap/parameters/enabled)
+msg_tab "$(swapon --show)"
+msg_tab "$(sysctl vm.swappiness)"
 echo
-echo -e "${green}✔ Otimização concluída.${reset}"
-echo -e "${yellow}Recomendado reiniciar o sistema.${reset}"
+echo -e "${green}✔ Otimização concluída${reset}"
+echo -e "${yellow}Reinicie o sistema.${reset}"
