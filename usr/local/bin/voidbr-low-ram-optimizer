@@ -456,121 +456,109 @@ set_varcolors
 sh_checkroot "$@"
 
 ##########################################################################################################
+
 warn() { printf "${yellow}==> AVISO:${reset} %s\n" "$1"; }
 err() { printf "${red}==> ERRO:${reset} %s\n" "$1"; }
+changed=false
 
-# ---------------------------------------------------
-# ROOT
-# ---------------------------------------------------
+check_root() {
+	if [[ $EUID -ne 0 ]]; then
+		err "Execute como root."
+		exit 1
+	fi
+}
 
-if [[ $EUID -ne 0 ]]; then
-	err "Execute como root."
-	exit 1
-fi
+detect_ram() {
+	ram_gb=$(awk '/MemTotal/ {printf "%.0f", $2/1024/1024}' /proc/meminfo)
+	msg "RAM detectada: ${ram_gb} GB"
+}
 
-# ---------------------------------------------------
-# DETECTAR RAM
-# ---------------------------------------------------
+calculate_swap() {
+	if ((ram_gb <= 2)); then
+		swap_gb=6
+	elif ((ram_gb <= 4)); then
+		swap_gb=8
+	elif ((ram_gb <= 8)); then
+		swap_gb=12
+	else
+		swap_gb=$ram_gb
+	fi
+	msg "Swap recomendada: ${swap_gb} GB"
+}
 
-ram_gb=$(awk '/MemTotal/ {printf "%.0f", $2/1024/1024}' /proc/meminfo)
-msg "RAM detectada: ${ram_gb} GB"
+remove_zram() {
+	if grep -q "^zram" /proc/modules; then
+		msg "Removendo zram..."
 
-# ---------------------------------------------------
-# CALCULAR SWAP IDEAL
-# ---------------------------------------------------
-
-if ((ram_gb <= 2)); then
-	swap_gb=6
-elif ((ram_gb <= 4)); then
-	swap_gb=8
-elif ((ram_gb <= 8)); then
-	swap_gb=12
-else
-	swap_gb=$ram_gb
-fi
-
-msg "Swap recomendada: ${swap_gb} GB"
-
-# ---------------------------------------------------
-# REMOVER ZRAM
-# ---------------------------------------------------
-
-msg "Removendo zram..."
-
-if command -v zramctl >/dev/null; then
-	for dev in $(zramctl -n -o NAME 2>/dev/null); do
-		swapoff "$dev" 2>/dev/null
-	done
-fi
-
-modprobe -r zram 2>/dev/null
-
-for f in \
-	/etc/runit/core-services/10-zram.sh \
-	/etc/runit/core-services/10-voidbr-zram.sh; do
-	[ -f "$f" ] && rm -f "$f"
-done
-
-mkdir -p /etc/modprobe.d
-echo "blacklist zram" >/etc/modprobe.d/disable-zram.conf
-
-# ---------------------------------------------------
-# CRIAR OU AJUSTAR SWAPFILE
-# ---------------------------------------------------
-
-desired_size=$((swap_gb * 1024 * 1024 * 1024))
-
-if [ -f /swapfile ]; then
-
-	current_size=$(stat -c%s /swapfile)
-
-	if [ "$current_size" -ne "$desired_size" ]; then
-
-		current_gb=$((current_size / 1024 / 1024 / 1024))
-
-		warn "Swap atual: ${current_gb}G"
-		warn "Swap recomendado: ${swap_gb}G"
-
-		swapoff /swapfile 2>/dev/null
-		rm -f /swapfile
-
-		msg "Recriando swapfile..."
-
-		if ! fallocate -l ${swap_gb}G /swapfile 2>/dev/null; then
-			dd if=/dev/zero of=/swapfile bs=1M count=$((swap_gb * 1024))
+		if command -v zramctl >/dev/null; then
+			for dev in $(zramctl -n -o NAME 2>/dev/null); do
+				swapoff "$dev" 2>/dev/null
+			done
 		fi
 
-		chmod 600 /swapfile
-		mkswap /swapfile
-
-	else
-		msg "Swapfile já está no tamanho correto."
+		modprobe -r zram 2>/dev/null
+		changed=true
 	fi
 
-else
+	for f in \
+		/etc/runit/core-services/10-zram.sh \
+		/etc/runit/core-services/10-voidbr-zram.sh; do
+		if [ -f "$f" ]; then
+			rm -f "$f"
+			changed=true
+		fi
+	done
+
+	mkdir -p /etc/modprobe.d
+
+	if ! grep -q "^blacklist zram" /etc/modprobe.d/disable-zram.conf 2>/dev/null; then
+		echo "blacklist zram" >/etc/modprobe.d/disable-zram.conf
+		changed=true
+	fi
+}
+
+create_swapfile() {
+	swapoff /swapfile 2>/dev/null
+	rm -f /swapfile
 
 	msg "Criando swapfile ${swap_gb}G..."
-
 	if ! fallocate -l ${swap_gb}G /swapfile 2>/dev/null; then
 		dd if=/dev/zero of=/swapfile bs=1M count=$((swap_gb * 1024))
 	fi
-
 	chmod 600 /swapfile
 	mkswap /swapfile
+	changed=true
+}
 
-fi
+configure_swapfile() {
+	desired_size=$((swap_gb * 1024 * 1024 * 1024))
 
-if ! grep -q "/swapfile" /etc/fstab; then
-	echo "/swapfile none swap defaults,pri=20 0 0" >>/etc/fstab
-fi
+	if [ -f /swapfile ]; then
+		current_size=$(stat -c%s /swapfile)
+		if [ "$current_size" -ne "$desired_size" ]; then
+			current_gb=$((current_size / 1024 / 1024 / 1024))
+			warn "Swap atual: ${current_gb}G"
+			warn "Swap recomendado: ${swap_gb}G"
+			create_swapfile
+		else
+			msg "Swapfile já está no tamanho correto."
+		fi
+	else
+		create_swapfile
+	fi
 
-# ---------------------------------------------------
-# SYSCTL
-# ---------------------------------------------------
+	if ! grep -qE '^[[:space:]]*/swapfile[[:space:]]' /etc/fstab; then
+		echo "/swapfile none swap defaults,pri=20 0 0" >>/etc/fstab
+		changed=true
+	fi
+}
 
-msg "Aplicando tunagem de memória..."
+configure_sysctl() {
+	file=/etc/sysctl.d/99-voidbr-memory-tuning.conf
 
-cat <<EOF >/etc/sysctl.d/99-voidbr-memory-tuning.conf
+	msg "Aplicando tunagem de memória..."
+	if [ ! -f "$file" ]; then
+		cat <<EOF >"$file"
 vm.swappiness=180
 vm.vfs_cache_pressure=200
 vm.page-cluster=0
@@ -579,104 +567,126 @@ vm.dirty_ratio=10
 vm.dirty_expire_centisecs=3000
 vm.dirty_writeback_centisecs=500
 EOF
-
-sysctl --system >/dev/null
-
-# ---------------------------------------------------
-# ZSWAP
-# ---------------------------------------------------
-
-msg "Configurando zswap no grub..."
-if [ -f /etc/default/grub ]; then
-	if ! grep -q "zswap.enabled" /etc/default/grub; then
-		sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="zswap.enabled=1 zswap.compressor=lzo zswap.max_pool_percent=25 /' /etc/default/grub
-	fi
-
-	if command -v update-grub >/dev/null; then
-		update-grub &>/dev/null
+		sysctl --system >/dev/null
+		changed=true
 	else
-		grub-mkconfig -o /boot/grub/grub.cfg &>/dev/null
+		msg "Sysctl já configurado."
 	fi
-fi
+}
 
-# ---------------------------------------------------
-# THP
-# ---------------------------------------------------
+configure_zswap() {
+	msg "Configurando zswap no grub..."
+	if [ -f /etc/default/grub ]; then
+		if ! grep -q "zswap.enabled" /etc/default/grub; then
+			sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="zswap.enabled=1 zswap.compressor=lzo zswap.max_pool_percent=25 /' /etc/default/grub
+			if command -v update-grub >/dev/null; then
+				update-grub &>/dev/null
+			else
+				grub-mkconfig -o /boot/grub/grub.cfg &>/dev/null
+			fi
+			changed=true
+		else
+			msg "zswap já configurado."
+		fi
+	fi
+}
 
-mkdir -p /etc/runit/core-services
-
-cat <<'EOF' >/etc/runit/core-services/05-voidbr-thp.sh
+configure_thp() {
+	file=/etc/runit/core-services/05-voidbr-thp.sh
+	if [ ! -f "$file" ]; then
+		mkdir -p /etc/runit/core-services
+		cat <<'EOF' >"$file"
 #!/bin/sh
 echo never > /sys/kernel/mm/transparent_hugepage/enabled
 EOF
+		chmod +x "$file"
+		changed=true
+	else
+		msg "THP já configurado."
+	fi
+}
 
-chmod +x /etc/runit/core-services/05-voidbr-thp.sh
+detect_disk() {
+	root_partition=$(findmnt -n -o SOURCE /)
+	disk=$(lsblk -no PKNAME "$root_partition" | tail -n1)
+	disk=$(echo "$disk" | sed 's/p[0-9]\+$//; s/[0-9]\+$//')
 
-# ---------------------------------------------------
-# DETECTAR DISCO E TIPO (PRECISÃO) - v1.3.6
-# ---------------------------------------------------
+	if [[ -z "$disk" ]]; then
+		disk=$(lsblk -ndo NAME,TYPE | awk '$2=="disk"{print $1;exit}')
+	fi
 
-# 1. Obter o disco físico pai (independente de ser LVM/LUKS/Partição)
-root_partition=$(findmnt -n -o SOURCE /)
-disk=$(lsblk -no PKNAME "$root_partition" | tail -n1)
+	is_rotational=$(cat /sys/block/"$disk"/queue/rotational 2>/dev/null)
+	supports_discard=$(lsblk -no DISC-MAX "/dev/$disk" | awk '{print ($1!="0B" && $1!="") ? 1 : 0}')
 
-# Se for partição (ex: sda1), limpa para o disco (ex: sda)
-disk=$(echo "$disk" | sed 's/p[0-9]\+$//; s/[0-9]\+$//')
+	if [[ "$disk" == nvme* ]]; then
+		type="NVMe"
+		scheduler="none"
+	elif [[ "$is_rotational" == "0" || "$supports_discard" == "1" ]]; then
+		type="SSD"
+		scheduler="mq-deadline"
+	else
+		type="HDD"
+		scheduler="bfq"
+	fi
+	msg "$type detectado ($disk)"
+}
 
-# Fallback para o primeiro disco se o findmnt falhar
-if [[ -z "$disk" ]]; then
-    disk=$(lsblk -ndo NAME,TYPE | awk '$2=="disk"{print $1;exit}')
-fi
+configure_scheduler() {
+	file=/etc/runit/core-services/03-voidbr-scheduler.sh
 
-# 2. Lógica de detecção de tipo (Mecânico vs SSD/NVMe)
-is_rotational=$(cat /sys/block/"$disk"/queue/rotational 2>/dev/null)
-supports_discard=$(lsblk -no DISC-MAX "/dev/$disk" | awk '{print ($1!="0B" && $1!="") ? 1 : 0}')
-
-if [[ "$disk" == nvme* ]]; then
-    type="NVMe"
-    scheduler="none"
-elif [[ "$is_rotational" == "0" || "$supports_discard" == "1" ]]; then
-    # Se não roda OU se aceita TRIM (Discard), tratamos como SSD
-    type="SSD"
-    scheduler="mq-deadline"
-else
-    # Se roda E não tem TRIM, é HDD
-    type="HDD"
-    scheduler="bfq"
-fi
-
-msg "$type detectado ($disk)"
-
-# ---------------------------------------------------
-# APLICAR SCHEDULER (PERSISTENTE VIA RUNIT)
-# ---------------------------------------------------
-
-cat <<EOF > /etc/runit/core-services/03-voidbr-scheduler.sh
+	if [ ! -f "$file" ]; then
+		cat <<EOF >"$file"
 #!/bin/sh
 # Configura o scheduler otimizado para $type
 for d in /sys/block/*; do
     [ -e "\$d/queue/scheduler" ] && echo "$scheduler" > "\$d/queue/scheduler" 2>/dev/null
 done
 EOF
-chmod +x /etc/runit/core-services/03-voidbr-scheduler.sh
+		chmod +x "$file"
+		changed=true
+	else
+		msg "Scheduler já configurado."
+	fi
+}
 
-# ---------------------------------------------------
-# ATIVAR SWAP
-# ---------------------------------------------------
-swapon -a
+enable_swap() {
+	if ! swapon --show=NAME | grep -q "^/swapfile$"; then
+		swapon /swapfile
+	fi
+}
 
-# ---------------------------------------------------
-# SUMÁRIO FINAL
-# ---------------------------------------------------
+summary() {
+	replicate '-'
+	echo "${blue}Resumo do sistema${rst}"
+	replicate '-'
 
-replicate '-'
-echo "${blue}Resumo do sistema${rst}"
-replicate '-'
-msg_tab "RAM             : ${ram_gb} GB"
-msg_tab "Swap configurada: ${swap_gb} GB"
-msg_tab "zswap           : " $(cat /sys/module/zswap/parameters/enabled)
-msg_tab "$(swapon --show)"
-msg_tab "$(sysctl vm.swappiness)"
-echo
-echo -e "${green}✔ Otimização concluída${reset}"
-echo -e "${yellow}Reinicie o sistema.${reset}"
+	msg_tab "RAM             : ${ram_gb} GB"
+	msg_tab "Swap configurada: ${swap_gb} GB"
+	msg_tab "zswap           : " $(cat /sys/module/zswap/parameters/enabled 2>/dev/null)
+	msg_tab "$(swapon --show)"
+	msg_tab "$(sysctl vm.swappiness)"
+	echo
+
+	if $changed; then
+		echo -e "${yellow}Alterações efetuadas. Reinicie o sistema!${reset}"
+	else
+		msg "${green}Nenhuma alteração foi necessária.${rst}"
+	fi
+}
+
+main() {
+	check_root
+	detect_ram
+	calculate_swap
+	remove_zram
+	configure_swapfile
+	configure_sysctl
+	configure_zswap
+	configure_thp
+	detect_disk
+	configure_scheduler
+	enable_swap
+	summary
+}
+
+main
