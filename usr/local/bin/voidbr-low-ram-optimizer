@@ -504,6 +504,11 @@ if [ -f /etc/runit/core-services/10-voidbr-zram.sh ]; then
 	rm -f /etc/runit/core-services/10-voidbr-zram.sh
 fi
 
+if [ -f /etc/runit/core-services/10-zram.sh ]; then
+	msg_warn "Script antigo encontrado — removendo"
+	rm -f /etc/runit/core-services/10-zram.sh
+fi
+
 # bloquear módulo
 mkdir -p /etc/modprobe.d
 echo "blacklist zram" >/etc/modprobe.d/disable-zram.conf
