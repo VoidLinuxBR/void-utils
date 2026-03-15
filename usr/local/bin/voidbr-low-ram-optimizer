@@ -461,11 +461,56 @@ warn() { printf "${yellow}==> AVISO:${reset} %s\n" "$1"; }
 err() { printf "${red}==> ERRO:${reset} %s\n" "$1"; }
 changed=false
 
+detect_init() {
+	init_system=$(ps -p 1 -o comm=)
+	case "$init_system" in
+		systemd) init="systemd" ;;
+		runit) init="runit" ;;
+		*) init="unknown" ;;
+	esac
+	msg "Init detectado: $init"
+}
+
 check_root() {
 	if [[ $EUID -ne 0 ]]; then
 		err "Execute como root."
 		exit 1
 	fi
+}
+
+cleanup_old_voidbr_runit() {
+	if [[ "$init" != "runit" ]]; then
+		return
+	fi
+	msg "Removendo configuração antiga VoidBR..."
+	rm -f /etc/runit/core-services/10-zram.sh
+	rm -f /etc/runit/core-services/10-voidbr-zram.sh
+}
+
+cleanup_old_chili_systemd() {
+  if [[ "$init" != "systemd" ]]; then
+    return
+  fi
+
+  msg "Removendo configuração antiga Chili (systemd)..."
+  for svc in chili-thp chili-bfq chili-zram; do
+    if systemctl list-unit-files | grep -q "^${svc}\.service"; then
+      systemctl disable "$svc" 2>/dev/null
+      rm -f "/etc/systemd/system/${svc}.service"
+      changed=true
+    fi
+  done
+
+  for f in \
+    /usr/local/sbin/chili-thp \
+    /usr/local/sbin/chili-bfq \
+    /usr/local/sbin/chili-zram; do
+    if [ -f "$f" ]; then
+      rm -f "$f"
+      changed=true
+    fi
+  done
+  systemctl daemon-reload
 }
 
 detect_ram() {
@@ -489,28 +534,15 @@ calculate_swap() {
 remove_zram() {
 	if grep -q "^zram" /proc/modules; then
 		msg "Removendo zram..."
-
 		if command -v zramctl >/dev/null; then
 			for dev in $(zramctl -n -o NAME 2>/dev/null); do
 				swapoff "$dev" 2>/dev/null
 			done
 		fi
-
 		modprobe -r zram 2>/dev/null
 		changed=true
 	fi
-
-	for f in \
-		/etc/runit/core-services/10-zram.sh \
-		/etc/runit/core-services/10-voidbr-zram.sh; do
-		if [ -f "$f" ]; then
-			rm -f "$f"
-			changed=true
-		fi
-	done
-
 	mkdir -p /etc/modprobe.d
-
 	if ! grep -q "^blacklist zram" /etc/modprobe.d/disable-zram.conf 2>/dev/null; then
 		echo "blacklist zram" >/etc/modprobe.d/disable-zram.conf
 		changed=true
@@ -520,7 +552,6 @@ remove_zram() {
 create_swapfile() {
 	swapoff /swapfile 2>/dev/null
 	rm -f /swapfile
-
 	msg "Criando swapfile ${swap_gb}G..."
 	if ! fallocate -l ${swap_gb}G /swapfile 2>/dev/null; then
 		dd if=/dev/zero of=/swapfile bs=1M count=$((swap_gb * 1024))
@@ -532,7 +563,6 @@ create_swapfile() {
 
 configure_swapfile() {
 	desired_size=$((swap_gb * 1024 * 1024 * 1024))
-
 	if [ -f /swapfile ]; then
 		current_size=$(stat -c%s /swapfile)
 		if [ "$current_size" -ne "$desired_size" ]; then
@@ -546,19 +576,21 @@ configure_swapfile() {
 	else
 		create_swapfile
 	fi
-
 	if ! grep -qE '^[[:space:]]*/swapfile[[:space:]]' /etc/fstab; then
-		echo "/swapfile none swap defaults,pri=20 0 0" >>/etc/fstab
+		echo "/swapfile none swap defaults,pri=20 0 0" >> /etc/fstab
 		changed=true
 	fi
 }
 
 configure_sysctl() {
-	file=/etc/sysctl.d/99-voidbr-memory-tuning.conf
-
-	msg "Aplicando tunagem de memória..."
+	if [[ "$init" == "systemd" ]]; then
+		file=/etc/sysctl.d/99-chili-memory-tuning.conf
+	else
+		file=/etc/sysctl.d/99-voidbr-memory-tuning.conf
+	fi
+	msg "Configurando parâmetros de memória..."
 	if [ ! -f "$file" ]; then
-		cat <<EOF >"$file"
+		cat <<EOF > "$file"
 vm.swappiness=180
 vm.vfs_cache_pressure=200
 vm.page-cluster=0
@@ -570,39 +602,62 @@ EOF
 		sysctl --system >/dev/null
 		changed=true
 	else
-		msg "Sysctl já configurado."
+		msg_tab "Sysctl já configurado."
 	fi
 }
 
 configure_zswap() {
-	msg "Configurando zswap no grub..."
+	msg "Configurando zswap..."
 	if [ -f /etc/default/grub ]; then
 		if ! grep -q "zswap.enabled" /etc/default/grub; then
-			sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="zswap.enabled=1 zswap.compressor=lzo zswap.max_pool_percent=25 /' /etc/default/grub
+			sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="zswap.enabled=1 zswap.max_pool_percent=25 /' /etc/default/grub
 			if command -v update-grub >/dev/null; then
-				update-grub &>/dev/null
-			else
-				grub-mkconfig -o /boot/grub/grub.cfg &>/dev/null
+				update-grub
+			elif command -v grub-mkconfig >/dev/null; then
+				grub-mkconfig -o /boot/grub/grub.cfg
 			fi
 			changed=true
 		else
-			msg "zswap já configurado."
+			msg_tab "zswap já configurado."
 		fi
+	else
+		warn "GRUB não encontrado. Ative zswap manualmente."
 	fi
 }
 
 configure_thp() {
-	file=/etc/runit/core-services/05-voidbr-thp.sh
-	if [ ! -f "$file" ]; then
-		mkdir -p /etc/runit/core-services
-		cat <<'EOF' >"$file"
+  msg "Configurando THP"
+	if [[ "$init" == "runit" ]]; then
+		file=/etc/runit/core-services/05-voidbr-thp.sh
+		if [ ! -f "$file" ]; then
+			cat <<'EOF' >"$file"
 #!/bin/sh
 echo never > /sys/kernel/mm/transparent_hugepage/enabled
 EOF
-		chmod +x "$file"
-		changed=true
-	else
-		msg "THP já configurado."
+			chmod +x "$file"
+			changed=true
+		else
+			msg_tab "THP já configurado."
+		fi
+	elif [[ "$init" == "systemd" ]]; then
+		file=/etc/systemd/system/chili-thp.service
+		if [ ! -f "$file" ]; then
+			cat <<'EOF' >"$file"
+[Unit]
+Description=Disable Transparent Huge Pages (Chili)
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target
+EOF
+			systemctl daemon-reload
+			systemctl enable chili-thp
+			changed=true
+		else
+			msg_tab "THP já configurado."
+		fi
 	fi
 }
 
@@ -610,18 +665,11 @@ detect_disk() {
 	root_partition=$(findmnt -n -o SOURCE /)
 	disk=$(lsblk -no PKNAME "$root_partition" | tail -n1)
 	disk=$(echo "$disk" | sed 's/p[0-9]\+$//; s/[0-9]\+$//')
-
 	if [[ -z "$disk" ]]; then
 		disk=$(lsblk -ndo NAME,TYPE | awk '$2=="disk"{print $1;exit}')
 	fi
-
 	is_rotational=$(cat /sys/block/"$disk"/queue/rotational 2>/dev/null)
-	supports_discard=$(lsblk -no DISC-MAX "/dev/$disk" | awk '{print ($1!="0B" && $1!="") ? 1 : 0}')
-
-	if [[ "$disk" == nvme* ]]; then
-		type="NVMe"
-		scheduler="none"
-	elif [[ "$is_rotational" == "0" || "$supports_discard" == "1" ]]; then
+	if [[ "$is_rotational" == "0" ]]; then
 		type="SSD"
 		scheduler="mq-deadline"
 	else
@@ -632,20 +680,39 @@ detect_disk() {
 }
 
 configure_scheduler() {
-	file=/etc/runit/core-services/03-voidbr-scheduler.sh
-
-	if [ ! -f "$file" ]; then
-		cat <<EOF >"$file"
+	if [[ "$init" == "runit" ]]; then
+		file=/etc/runit/core-services/03-voidbr-scheduler.sh
+		if [ ! -f "$file" ]; then
+			cat <<EOF >"$file"
 #!/bin/sh
-# Configura o scheduler otimizado para $type
 for d in /sys/block/*; do
-    [ -e "\$d/queue/scheduler" ] && echo "$scheduler" > "\$d/queue/scheduler" 2>/dev/null
+	[ -e "\$d/queue/scheduler" ] && echo "$scheduler" > "\$d/queue/scheduler" 2>/dev/null
 done
 EOF
-		chmod +x "$file"
-		changed=true
-	else
-		msg "Scheduler já configurado."
+			chmod +x "$file"
+			changed=true
+		else
+			msg "Scheduler já configurado."
+		fi
+	elif [[ "$init" == "systemd" ]]; then
+		file=/etc/systemd/system/chili-bfq.service
+		if [ ! -f "$file" ]; then
+			cat <<EOF >"$file"
+[Unit]
+Description=Set BFQ IO Scheduler (Chili)
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'for d in /sys/block/sd*; do echo bfq > "\$d/queue/scheduler" 2>/dev/null; done'
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target
+EOF
+			systemctl daemon-reload
+			systemctl enable chili-bfq
+			changed=true
+		else
+			msg "Scheduler já configurado."
+		fi
 	fi
 }
 
@@ -659,14 +726,11 @@ summary() {
 	replicate '-'
 	echo "${blue}Resumo do sistema${rst}"
 	replicate '-'
-
 	msg_tab "RAM             : ${ram_gb} GB"
 	msg_tab "Swap configurada: ${swap_gb} GB"
-	msg_tab "zswap           : " $(cat /sys/module/zswap/parameters/enabled 2>/dev/null)
 	msg_tab "$(swapon --show)"
 	msg_tab "$(sysctl vm.swappiness)"
 	echo
-
 	if $changed; then
 		echo -e "${yellow}Alterações efetuadas. Reinicie o sistema!${reset}"
 	else
@@ -676,6 +740,9 @@ summary() {
 
 main() {
 	check_root
+	detect_init
+	cleanup_old_voidbr_runit
+	cleanup_old_chili_systemd
 	detect_ram
 	calculate_swap
 	remove_zram
@@ -683,6 +750,7 @@ main() {
 	configure_sysctl
 	configure_zswap
 	configure_thp
+	echo $changed
 	detect_disk
 	configure_scheduler
 	enable_swap
