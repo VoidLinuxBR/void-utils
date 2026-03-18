@@ -642,7 +642,7 @@ EOF
 		sysctl --system >/dev/null
 		changed=true
 	else
-		msg_tab "Sysctl já configurado."
+		msg_tab "${green}Sysctl já configurado.${rst}"
 	fi
 }
 
@@ -658,7 +658,7 @@ configure_zswap() {
 			fi
 			changed=true
 		else
-			msg_tab "zswap já configurado."
+			msg_tab "${green}zswap já configurado.${rst}"
 		fi
 	else
 		warn "GRUB não encontrado. Ative zswap manualmente."
@@ -677,7 +677,7 @@ EOF
 			chmod +x "$file"
 			changed=true
 		else
-			msg_tab "THP já configurado."
+			msg_tab "${green}THP já configurado.${rst}"
 		fi
 	elif [[ "$init" == "systemd" ]]; then
 		file=/etc/systemd/system/chili-thp.service
@@ -696,7 +696,7 @@ EOF
 			systemctl enable chili-thp
 			changed=true
 		else
-			msg_tab "THP já configurado."
+			msg_tab "${green}THP já configurado.${rst}"
 		fi
 	fi
 }
@@ -732,7 +732,7 @@ EOF
 			chmod +x "$file"
 			changed=true
 		else
-			msg "Scheduler já configurado."
+			msg "${green}Scheduler já configurado.${rst}"
 		fi
 	elif [[ "$init" == "systemd" ]]; then
 		file=/etc/systemd/system/chili-bfq.service
@@ -751,7 +751,7 @@ EOF
 			systemctl enable chili-bfq
 			changed=true
 		else
-			msg "Scheduler já configurado."
+			msg "${green}Scheduler já configurado.${rst}"
 		fi
 	fi
 }
