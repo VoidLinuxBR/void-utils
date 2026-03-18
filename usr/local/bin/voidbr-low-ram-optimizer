@@ -468,7 +468,7 @@ detect_init() {
 		runit) init="runit" ;;
 		*) init="unknown" ;;
 	esac
-	msg "Init detectado: $init"
+	msg "Init detectado: ${yellow}${init}${rst}"
 }
 
 check_root() {
@@ -525,12 +525,12 @@ cleanup_old_chili_systemd() {
 
 detect_ram() {
 	ram_gb=$(awk '/MemTotal/ {printf "%.0f", $2/1024/1024}' /proc/meminfo)
-	msg "RAM detectada: ${ram_gb} GB"
+	msg "RAM detectada: ${yellow}${ram_gb} GB${rst}"
 }
 
 detect_fs() {
 	root_fs=$(stat -f -c %T /)
-	msg "Filesystem raiz: $root_fs"
+	msg "Filesystem raiz: ${yellow}${root_fs}${rst}"
 }
 
 calculate_swap() {
@@ -543,7 +543,7 @@ calculate_swap() {
 	else
 		swap_gb=$ram_gb
 	fi
-	msg "Swap recomendada: ${swap_gb} GB"
+	msg "Swap recomendada: ${yellow}${swap_gb} GB${rst}"
 }
 
 remove_zram() {
@@ -608,7 +608,7 @@ configure_swapfile() {
 			warn "Swap recomendado: ${swap_gb}G"
 			create_swapfile
 		else
-			msg "Swapfile já está no tamanho correto."
+			msg_tab "${green}Swapfile já está no tamanho correto.${rst}"
 		fi
 	else
 		create_swapfile
@@ -732,7 +732,7 @@ EOF
 			chmod +x "$file"
 			changed=true
 		else
-			msg "${green}Scheduler já configurado.${rst}"
+			msg_tab "${green}Scheduler já configurado.${rst}"
 		fi
 	elif [[ "$init" == "systemd" ]]; then
 		file=/etc/systemd/system/chili-bfq.service
@@ -751,7 +751,7 @@ EOF
 			systemctl enable chili-bfq
 			changed=true
 		else
-			msg "${green}Scheduler já configurado.${rst}"
+			msg_tab "${green}Scheduler já configurado.${rst}"
 		fi
 	fi
 }
