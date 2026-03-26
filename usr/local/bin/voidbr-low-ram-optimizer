@@ -6,7 +6,7 @@
 #  Otimização automática para máquinas com pouca RAM
 #  Created: qua 11 mar 2026 11:53:16 -04
 #  Altered: qua 11 mar 2026 11:53:16 -04
-#  Updated: qua 18 mar 2026 12:27:36 -04
+#  Updated: qui 26 mar 2026 14:21:01 -04
 #
 #  Copyright (c) 2019-2026, Vilmar Catafesta <vcatafesta@gmail.com>
 #  Copyright (c) 2019-2026, ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>
@@ -46,7 +46,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="0.03.18-20260318"
+declare _VERSION_="0.03.26-20260326"
 declare APPDESC="$APP - Wraper for "
 declare distro="$(uname -n)"
 declare -A PACKAGEDEP=(
@@ -762,20 +762,46 @@ enable_swap() {
 	fi
 }
 
+ensure_debugfs() {
+  if ! mountpoint -q /sys/kernel/debug; then
+    msg "Montando debugfs..."
+    mount -t debugfs none /sys/kernel/debug
+  fi
+}
+
 summary() {
-	replicate '-'
-	echo "${blue}Resumo do sistema${rst}"
-	replicate '-'
-	msg_tab "RAM             : ${ram_gb} GB"
-	msg_tab "Swap configurada: ${swap_gb} GB"
-	msg_tab "$(swapon --show)"
-	msg_tab "$(sysctl vm.swappiness)"
-	echo
-	if $changed; then
-		echo -e "${yellow}Alterações efetuadas. Reinicie o sistema!${reset}"
-	else
-		msg "${green}Nenhuma alteração foi necessária.${rst}"
-	fi
+  replicate '-'
+  echo "${blue}Resumo do sistema${rst}"
+  replicate '-'
+
+  msg "RAM             : ${yellow}${ram_gb} GB"
+  msg "Swap configurada: ${yellow}${swap_gb} GB"
+  msg_tab "${yellow}$(swapon --show)"
+  msg "$(sysctl vm.swappiness)"
+
+  # zswap básico
+  if [ -d /sys/module/zswap ]; then
+    msg "zswap enabled  : ${yellow}$(cat /sys/module/zswap/parameters/enabled)"
+    for f in /sys/module/zswap/parameters/*; do
+      msg_tab "$(printf "%-30s : ${yellow}%s\n" "$(basename "$f")" "$(cat "$f")")"
+    done
+  else
+    msg_tab "zswap          : não disponível"
+  fi
+
+  # debugfs (stats)
+  if mountpoint -q /sys/kernel/debug 2>/dev/null && [ -d /sys/kernel/debug/zswap ]; then
+    msg $(cat /sys/kernel/debug/zswap/*)
+  else
+    msg "zswap stats    : debugfs não montado"
+  fi
+
+  echo
+  if $changed; then
+    echo -e "${yellow}Alterações efetuadas. Reinicie o sistema!${reset}"
+  else
+    msg "${green}Nenhuma alteração foi necessária.${rst}"
+  fi
 }
 
 main() {
@@ -794,7 +820,8 @@ main() {
 	detect_disk
 	configure_scheduler
 	enable_swap
-	summary
+  ensure_debugfs
+  summary
 }
 
 main
