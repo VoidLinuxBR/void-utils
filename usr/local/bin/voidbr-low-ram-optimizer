@@ -6,7 +6,7 @@
 #  Otimização automática para máquinas com pouca RAM
 #  Created: qua 11 mar 2026 11:53:16 -04
 #  Altered: qua 11 mar 2026 11:53:16 -04
-#  Updated: qui 26 mar 2026 14:21:01 -04
+#  Updated: sex 27 mar 2026 22:34:41 -04
 #
 #  Copyright (c) 2019-2026, Vilmar Catafesta <vcatafesta@gmail.com>
 #  Copyright (c) 2019-2026, ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>
@@ -46,7 +46,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="0.03.26-20260326"
+declare _VERSION_="0.03.27-20260327"
 declare APPDESC="$APP - Wraper for "
 declare distro="$(uname -n)"
 declare -A PACKAGEDEP=(
@@ -482,7 +482,7 @@ cleanup_old_voidbr_runit() {
 	if [[ "$init" != "runit" ]]; then
 		return
 	fi
-	msg "Removendo configuração antiga VoidBR..."
+	msg "Removendo configuração antiga (runit)..."
 	rm -f /etc/runit/core-services/10-zram.sh
 	rm -f /etc/runit/core-services/10-voidbr-zram.sh
 }
@@ -492,8 +492,7 @@ cleanup_old_chili_systemd() {
     return
   fi
 
-  msg "Verificando configuração antiga Chili (systemd)..."
-
+  msg "Verificando configuração antiga (systemd)..."
   for svc in chili-thp chili-bfq chili-zram; do
     file="/etc/systemd/system/${svc}.service"
 
@@ -647,22 +646,43 @@ EOF
 }
 
 configure_zswap() {
-	msg "Configurando zswap..."
-	if [ -f /etc/default/grub ]; then
-		if ! grep -q "zswap.enabled" /etc/default/grub; then
-			sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="zswap.enabled=1 zswap.max_pool_percent=25 /' /etc/default/grub
-			if command -v update-grub >/dev/null; then
-				update-grub
-			elif command -v grub-mkconfig >/dev/null; then
-				grub-mkconfig -o /boot/grub/grub.cfg
-			fi
-			changed=true
-		else
-			msg_tab "${green}zswap já configurado.${rst}"
-		fi
-	else
-		warn "GRUB não encontrado. Ative zswap manualmente."
-	fi
+  file="/etc/default/grub"
+  msg "Configurando zswap..."
+
+  [ -f "$file" ] || { warn "GRUB não encontrado."; return; }
+
+  # garante linha
+  grep -q '^GRUB_CMDLINE_LINUX=' "$file" || \
+    echo 'GRUB_CMDLINE_LINUX=""' >> "$file"
+
+  # pega conteúdo atual
+  current=$(sed -n 's/^GRUB_CMDLINE_LINUX="\([^"]*\)"/\1/p' "$file")
+
+  # remove params antigos
+  current="${current//zswap.enabled=*/}"
+  current="${current//zswap.max_pool_percent=*/}"
+
+  # normaliza espaços
+  current="$(echo "$current" | xargs)"
+
+  # adiciona correto
+  new="$current zswap.enabled=1 zswap.max_pool_percent=25"
+  new="$(echo "$new" | xargs)"
+
+  # só altera se mudou
+  if ! grep -q "GRUB_CMDLINE_LINUX=\"$new\"" "$file"; then
+    sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=\"$new\"|" "$file"
+
+    if command -v update-grub >/dev/null; then
+      update-grub
+    else
+      grub-mkconfig -o /boot/grub/grub.cfg
+    fi
+
+    changed=true
+  else
+    msg_tab "${green}zswap já configurado.${rst}"
+  fi
 }
 
 configure_thp() {
@@ -824,4 +844,101 @@ main() {
   summary
 }
 
-main
+uninstall() {
+  msg "Removendo configurações..."
+
+  detect_init
+
+  # swapfile
+  if swapon --show=NAME | grep -q '^/swapfile$'; then
+    swapoff /swapfile
+  fi
+  rm -f /swapfile
+  sed -i '\|/swapfile|d' /etc/fstab
+
+  # sysctl
+  rm -f /etc/sysctl.d/99-voidbr-memory-tuning.conf
+  rm -f /etc/sysctl.d/99-chili-memory-tuning.conf
+
+  # zram blacklist
+  rm -f /etc/modprobe.d/disable-zram.conf
+
+  # zswap (GRUB)
+  if [ -f /etc/default/grub ]; then
+    sed -i '/^GRUB_CMDLINE_LINUX="/{
+      s/\<zswap.enabled=[^ "]*\>//g
+      s/\<zswap.max_pool_percent=[^ "]*\>//g
+      s/  */ /g
+      s/=" */="/
+      s/ *"$/"/
+    }' /etc/default/grub
+
+    if command -v update-grub >/dev/null; then
+      update-grub
+    else
+      grub-mkconfig -o /boot/grub/grub.cfg
+    fi
+  fi
+
+  # limpeza por init
+  case "$init" in
+    runit)
+      msg "Removendo configurações (runit)..."
+      rm -f /etc/runit/core-services/03-voidbr-scheduler.sh
+      rm -f /etc/runit/core-services/05-voidbr-thp.sh
+      rm -f /etc/runit/core-services/10-zram.sh
+      rm -f /etc/runit/core-services/10-voidbr-zram.sh
+      ;;
+
+    systemd)
+      msg "Removendo configurações (systemd)..."
+      systemctl disable chili-thp 2>/dev/null
+      rm -f /etc/systemd/system/chili-thp.service
+
+      systemctl disable chili-bfq 2>/dev/null
+      rm -f /etc/systemd/system/chili-bfq.service
+
+      systemctl daemon-reload
+      ;;
+  esac
+
+  msg "${green}Remoção concluída.${rst}"
+}
+
+usage() {
+  echo -e "${cyan}Uso:${reset} $0 [opção]"
+  echo
+  echo -e "${cyan}Opções:${reset}"
+  echo -e "  ${yellow}Sem opção     ${reset} mostra resumo do sistema"
+  echo -e "  ${green}--install${reset}      Aplica configurações"
+  echo -e "  ${red}--uninstall${reset}    Remove configurações"
+  echo -e "  ${cyan}-h, --help${reset}     Mostra esta ajuda"
+}
+
+case "$1" in
+  "")
+    detect_init
+    detect_fs
+    detect_ram
+    calculate_swap
+    detect_disk
+    ensure_debugfs
+    summary
+    usage
+    ;;
+  --install)
+    main
+    ;;
+  --uninstall)
+    check_root
+    uninstall
+    ;;
+  -h|--help)
+    usage
+    ;;
+  *)
+    err "Opção inválida: $1"
+    usage
+    exit 1
+    ;;
+esac
