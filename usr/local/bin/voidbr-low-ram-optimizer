@@ -6,7 +6,7 @@
 #  Otimização automática para máquinas com pouca RAM
 #  Created: qua 11 mar 2026 11:53:16 -04
 #  Altered: qua 11 mar 2026 11:53:16 -04
-#  Updated: sex 27 mar 2026 22:34:41 -04
+#  Updated: sáb 28 mar 2026 09:53:11 -04
 #
 #  Copyright (c) 2019-2026, Vilmar Catafesta <vcatafesta@gmail.com>
 #  Copyright (c) 2019-2026, ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>
@@ -46,7 +46,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="0.03.27-20260327"
+declare _VERSION_="0.03.28-20260328"
 declare APPDESC="$APP - Wraper for "
 declare distro="$(uname -n)"
 declare -A PACKAGEDEP=(
@@ -182,7 +182,7 @@ set_varcolors() {
 		: "${CROSS="${clrkey}[${red}✗✗✗${clrkey}]${rst}"}"
 		: "${MID="${clrkey}[${red}✗✗${green}✓${clrkey}]${rst}"}"
 		: "${WARN="${clrkey}[${yellow}⚠  ${clrkey}]${yellow}"}"
-		: "${INFO="${clrkey}[${yellow}➡  ${clrkey}]${rst}"}"
+		: "${INFO="${clrkey}[${black}➡  ${clrkey}]${rst}"}"
 
 		# dialog colors
 		REVERSE="\Zr"
@@ -375,6 +375,7 @@ log_ok() { echo -e "${TICK} ${*}${reset}"; }
 log_err() { echo -e "${CROSS} ${*}${reset}"; }
 log_mid() { echo -e "${MID} ${*}${reset}"; }
 log_warn() { echo -e "${WARN} ${*}${reset}"; }
+warn() { echo -e "${WARN} ${*}${reset}"; }
 msg_tab() { echo -e "  ${INFO} ${*}${reset}"; }
 log_ok_tab() { echo -e "  ${TICK} ${*}${reset}"; }
 log_err_tab() { echo -e "  ${CROSS} ${*}${reset}"; }
@@ -457,7 +458,7 @@ sh_checkroot "$@"
 
 ##########################################################################################################
 
-warn() { printf "${yellow}==> AVISO:${reset} %s\n" "$1"; }
+#warn() { printf "${yellow}==> AVISO:${reset} %s\n" "$1"; }
 err() { printf "${red}==> ERRO:${reset} %s\n" "$1"; }
 changed=false
 
@@ -468,7 +469,7 @@ detect_init() {
 		runit) init="runit" ;;
 		*) init="unknown" ;;
 	esac
-	msg "Init detectado: ${yellow}${init}${rst}"
+	msg "Init detectado: ${cyan}${init}${rst}"
 }
 
 check_root() {
@@ -482,7 +483,7 @@ cleanup_old_voidbr_runit() {
 	if [[ "$init" != "runit" ]]; then
 		return
 	fi
-	msg "Removendo configuração antiga (runit)..."
+	msg "Removendo configuração antiga ${cyan}(runit)..."
 	rm -f /etc/runit/core-services/10-zram.sh
 	rm -f /etc/runit/core-services/10-voidbr-zram.sh
 }
@@ -492,7 +493,7 @@ cleanup_old_chili_systemd() {
     return
   fi
 
-  msg "Verificando configuração antiga (systemd)..."
+  msg "Verificando configuração antiga ${cyan}(systemd)..."
   for svc in chili-thp chili-bfq chili-zram; do
     file="/etc/systemd/system/${svc}.service"
 
@@ -524,25 +525,43 @@ cleanup_old_chili_systemd() {
 
 detect_ram() {
 	ram_gb=$(awk '/MemTotal/ {printf "%.0f", $2/1024/1024}' /proc/meminfo)
-	msg "RAM detectada: ${yellow}${ram_gb} GB${rst}"
+	msg "RAM detectada: ${cyan}${ram_gb} GB${rst}"
 }
 
 detect_fs() {
 	root_fs=$(stat -f -c %T /)
-	msg "Filesystem raiz: ${yellow}${root_fs}${rst}"
+	msg "Filesystem raiz: ${cyan}${root_fs}${rst}"
+}
+
+supports_hibernation() {
+    grep -q "resume=" /proc/cmdline
 }
 
 calculate_swap() {
-	if ((ram_gb <= 2)); then
-		swap_gb=6
-	elif ((ram_gb <= 4)); then
-		swap_gb=8
-	elif ((ram_gb <= 8)); then
-		swap_gb=12
-	else
-		swap_gb=$ram_gb
-	fi
-	msg "Swap recomendada: ${yellow}${swap_gb} GB${rst}"
+    msg "Calculando swapfile..."
+    if supports_hibernation; then
+        msg_tab "Modo: ${cyan}hibernação${reset}"
+
+        if ((ram_gb <= 2)); then
+            swap_gb=$((ram_gb * 2))
+        elif ((ram_gb <= 8)); then
+            swap_gb=$((ram_gb + ram_gb / 2))
+        else
+            swap_gb=$((ram_gb + 4))
+        fi
+    else
+        msg_tab "Modo: ${cyan}low RAM${reset}"
+
+        if ((ram_gb <= 2)); then
+            swap_gb=$((ram_gb * 2))
+        elif ((ram_gb <= 8)); then
+            swap_gb=$ram_gb
+        else
+            swap_gb=8
+        fi
+    fi
+
+    msg_tab "Swap recomendada: ${cyan}${swap_gb} GB${rst}"
 }
 
 remove_zram() {
@@ -563,38 +582,61 @@ remove_zram() {
 	fi
 }
 
+check_disk_space() {
+  local required_mb=$((swap_gb * 1024))
+
+  # espaço disponível em MB
+  local avail_mb
+  avail_mb=$(df -Pm / | awk 'NR==2 {print $4}')
+
+  if (( avail_mb < required_mb )); then
+    msg "Erro: espaço insuficiente em disco!"
+    msg "Necessário: ${swap_gb}G | Disponível: $((avail_mb / 1024))G"
+    return 1
+  fi
+}
+
 create_swapfile() {
-	swapoff /swapfile 2>/dev/null
-	rm -f /swapfile
+    if ! check_disk_space; then
+        exit 1
+    fi
 
-	msg "Criando swapfile ${swap_gb}G..."
+  swapoff /swapfile 2>/dev/null
+  rm -f /swapfile
 
-	if [[ "$root_fs" == "btrfs" ]]; then
-		if command -v btrfs >/dev/null && btrfs filesystem mkswapfile --help >/dev/null 2>&1; then
-			msg "BTRFS detectado: usando mkswapfile nativo"
-			btrfs filesystem mkswapfile --size ${swap_gb}g /swapfile
-		else
-			msg "BTRFS detectado: criando swapfile manual (NoCOW)"
-			truncate -s 0 /swapfile
-			chattr +C /swapfile
+  msg "Criando swapfile ${swap_gb}G..."
 
-			if ! fallocate -l ${swap_gb}G /swapfile 2>/dev/null; then
-				dd if=/dev/zero of=/swapfile bs=1M count=$((swap_gb * 1024)) status=progress
-			fi
+  case "$root_fs" in
+    btrfs)
+      if command -v btrfs >/dev/null && btrfs filesystem mkswapfile --help >/dev/null 2>&1; then
+        msg "BTRFS: usando mkswapfile"
+        btrfs filesystem mkswapfile --size ${swap_gb}g /swapfile
+      else
+        msg "BTRFS: modo manual (NoCOW)"
+        truncate -s 0 /swapfile
+        chattr +C /swapfile
+        btrfs property set /swapfile compression none 2>/dev/null
 
-			chmod 600 /swapfile
-			mkswap /swapfile
-		fi
-	else
-		if ! fallocate -l ${swap_gb}G /swapfile 2>/dev/null; then
-			dd if=/dev/zero of=/swapfile bs=1M count=$((swap_gb * 1024)) status=progress
-		fi
+        fallocate -l ${swap_gb}G /swapfile 2>/dev/null || \
+          dd if=/dev/zero of=/swapfile bs=1G count=${swap_gb} status=progress oflag=direct
 
-		chmod 600 /swapfile
-		mkswap /swapfile
-	fi
+        chmod 600 /swapfile
+        mkswap /swapfile
+      fi
+      ;;
 
-	changed=true
+    *)
+      if ! fallocate -l ${swap_gb}G /swapfile 2>/dev/null; then
+        warn "fallocate ${red}falhou${rst} no $root_fs → usando ${cyan}dd"
+        dd if=/dev/zero of=/swapfile bs=1G count=${swap_gb} status=progress oflag=direct
+      fi
+
+      chmod 600 /swapfile
+      mkswap /swapfile
+      ;;
+  esac
+
+  changed=true
 }
 
 configure_swapfile() {
@@ -603,8 +645,8 @@ configure_swapfile() {
 		current_size=$(stat -c%s /swapfile)
 		if [ "$current_size" -ne "$desired_size" ]; then
 			current_gb=$((current_size / 1024 / 1024 / 1024))
-			warn "Swap atual: ${current_gb}G"
-			warn "Swap recomendado: ${swap_gb}G"
+			warn "Swap atual: ${red}${current_gb}G"
+			warn "Swap recomendado: ${cyan}${swap_gb}G"
 			create_swapfile
 		else
 			msg_tab "${green}Swapfile já está no tamanho correto.${rst}"
@@ -794,16 +836,16 @@ summary() {
   echo "${blue}Resumo do sistema${rst}"
   replicate '-'
 
-  msg "RAM             : ${yellow}${ram_gb} GB"
-  msg "Swap configurada: ${yellow}${swap_gb} GB"
-  msg_tab "${yellow}$(swapon --show)"
+  msg "RAM             : ${cyan}${ram_gb} GB"
+  msg "Swap configurada: ${cyan}${swap_gb} GB"
+  msg_tab "${cyan}$(swapon --show)"
   msg "$(sysctl vm.swappiness)"
 
   # zswap básico
   if [ -d /sys/module/zswap ]; then
-    msg "zswap enabled  : ${yellow}$(cat /sys/module/zswap/parameters/enabled)"
+    msg "zswap enabled  : ${cyan}$(cat /sys/module/zswap/parameters/enabled)"
     for f in /sys/module/zswap/parameters/*; do
-      msg_tab "$(printf "%-30s : ${yellow}%s\n" "$(basename "$f")" "$(cat "$f")")"
+      msg_tab "$(printf "%-30s : ${cyan}%s\n" "$(basename "$f")" "$(cat "$f")")"
     done
   else
     msg_tab "zswap          : não disponível"
@@ -818,7 +860,7 @@ summary() {
 
   echo
   if $changed; then
-    echo -e "${yellow}Alterações efetuadas. Reinicie o sistema!${reset}"
+    warn "${yellow}Alterações efetuadas. Reinicie o sistema!${reset}"
   else
     msg "${green}Nenhuma alteração foi necessária.${rst}"
   fi
