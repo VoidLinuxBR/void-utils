@@ -6,7 +6,7 @@
 #  Otimização automática para máquinas com pouca RAM
 #  Created: qua 11 mar 2026 11:53:16 -04
 #  Altered: qua 11 mar 2026 11:53:16 -04
-#  Updated: sáb 28 mar 2026 09:53:11 -04
+#  Updated: qui 02 abr 2026 21:12:18 -04
 #
 #  Copyright (c) 2019-2026, Vilmar Catafesta <vcatafesta@gmail.com>
 #  Copyright (c) 2019-2026, ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>
@@ -46,7 +46,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="0.03.28-20260328"
+declare _VERSION_="0.04.02-20260402"
 declare APPDESC="$APP - Wraper for "
 declare distro="$(uname -n)"
 declare -A PACKAGEDEP=(
@@ -824,6 +824,26 @@ enable_swap() {
 	fi
 }
 
+enable_preload() {
+  msg "Ativando preload..."
+  if command -v sv >/dev/null 2>&1; then
+    sudo xbps-install preload
+    sudo ln -sf /etc/sv/preload /var/service/
+  elif command -v systemctl >/dev/null 2>&1; then
+    sudo pacman -S preload
+    sudo systemctl enable --now preload
+  fi
+}
+
+disable_preload() {
+  msg "Desativando preload..."
+  if command -v sv >/dev/null 2>&1; then
+    sudo rm -f /var/service/preload
+  elif command -v systemctl >/dev/null 2>&1; then
+    sudo systemctl disable --now preload
+  fi
+}
+
 ensure_debugfs() {
   if ! mountpoint -q /sys/kernel/debug; then
     msg "Montando debugfs..."
@@ -882,6 +902,7 @@ main() {
 	detect_disk
 	configure_scheduler
 	enable_swap
+	enable_preload
   ensure_debugfs
   summary
 }
@@ -943,7 +964,7 @@ uninstall() {
       systemctl daemon-reload
       ;;
   esac
-
+  disable_preload
   msg "${green}Remoção concluída.${rst}"
 }
 
