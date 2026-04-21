@@ -6,7 +6,7 @@
 #  Otimização automática para máquinas com pouca RAM
 #  Created: qua 11 mar 2026 11:53:16 -04
 #  Altered: qua 11 mar 2026 11:53:16 -04
-#  Updated: qui 16 abr 2026 23:17:40 -04
+#  Updated: ter 21 abr 2026 07:17:02 -04
 #
 #  Copyright (c) 2019-2026, Vilmar Catafesta <vcatafesta@gmail.com>
 #  Copyright (c) 2019-2026, ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>
@@ -46,7 +46,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="0.04.16-20260416"
+declare _VERSION_="0.04.21-20260421"
 declare APPDESC="$APP - Wraper for "
 declare distro="$(uname -n)"
 declare -A PACKAGEDEP=(
@@ -531,33 +531,6 @@ supports_hibernation() {
 	grep -q "resume=" /proc/cmdline
 }
 
-calculate_swap() {
-	msg "Calculando swapfile..."
-	if supports_hibernation; then
-		msg_tab "Modo: ${cyan}hibernação${reset}"
-
-		if ((ram_gb <= 2)); then
-			swap_gb=$((ram_gb * 2))
-		elif ((ram_gb <= 8)); then
-			swap_gb=$((ram_gb + ram_gb / 2))
-		else
-			swap_gb=$((ram_gb + 4))
-		fi
-	else
-		msg_tab "Modo: ${cyan}low RAM${reset}"
-
-		if ((ram_gb <= 2)); then
-			swap_gb=$((ram_gb * 2))
-		elif ((ram_gb <= 8)); then
-			swap_gb=$ram_gb
-		else
-			swap_gb=8
-		fi
-	fi
-
-	msg_tab "Swap recomendada: ${cyan}${swap_gb} GB${rst}"
-}
-
 remove_zram() {
 	if grep -q "^zram" /proc/modules; then
 		msg "Removendo zram..."
@@ -639,7 +612,7 @@ configure_swapfile() {
 		current_size=$(stat -c%s /swapfile)
 		if [ "$current_size" -ne "$desired_size" ]; then
 			current_gb=$((current_size / 1024 / 1024 / 1024))
-			warn "Swap atual: ${red}${current_gb}G"
+			warn "Swap atual      : ${red}${current_gb}G"
 			warn "Swap recomendado: ${cyan}${swap_gb}G"
 			create_swapfile
 		else
@@ -856,6 +829,44 @@ detect_zswap() {
 	fi
 }
 
+calculate_swap() {
+	msg "Calculando swapfile..."
+	if supports_hibernation; then
+		msg_tab "Modo            : ${cyan}hibernação${reset}"
+
+		if ((ram_gb <= 2)); then
+			swap_gb=$((ram_gb * 2))
+		elif ((ram_gb <= 8)); then
+			swap_gb=$((ram_gb + ram_gb / 2))
+		else
+			swap_gb=$((ram_gb + 4))
+		fi
+	else
+		msg_tab "Modo            : ${cyan}low RAM${reset}"
+
+		if ((ram_gb <= 2)); then
+			swap_gb=$((ram_gb * 2))
+		elif ((ram_gb <= 8)); then
+			swap_gb=$ram_gb
+		else
+			swap_gb=8
+		fi
+	fi
+
+	msg_tab "Swap recomendada: ${cyan}${swap_gb} GB${rst}"
+  current_gb=0
+  if [ -f /swapfile ]; then
+    current_size=$(stat -c%s /swapfile)
+    current_gb=$((current_size / 1024 / 1024 / 1024))
+  fi
+  color=$cyan
+  if (( swap_gb != current_gb )); then
+    color=$yellow
+  fi
+  msg_tab "Swap atual      : ${color}${current_gb} GB"
+  msg_tab "${cyan}$(swapon --show)"
+}
+
 summary() {
 	replicate '-'
 	echo "${blue}Resumo do sistema${rst}"
@@ -864,17 +875,8 @@ summary() {
 	msg "Filesystem raiz : ${cyan}${root_fs}${rst}"
 	msg "Disco detectado : ${cyan}$type ($disk)${rst}"
 	msg "RAM detectada   : ${cyan}${ram_gb} GB${rst}"
-  calculate_swap
 
-  if [ -f /swapfile ]; then
-    current_size=$(stat -c%s /swapfile)
-    current_gb=$((current_size / 1024 / 1024 / 1024))
-		msg_tab "Swap configurado: ${cyan}${current_gb} GB"
-		msg_tab "${cyan}$(swapon --show)"
-  else
-    current_gb=0
-		msg_tab "Swap configurado: ${red}${current_gb} GB"
-	fi
+  calculate_swap
 
 	# zswap básico
 	detect_zswap
@@ -892,7 +894,7 @@ summary() {
   		msg_tab "zswap stats     : ${cyan}debugfs não montado${rst}"
   	fi
 	fi
-	replicate '#'
+	#replicate '#'
 
 	if $changed; then
   	echo
@@ -990,7 +992,7 @@ uninstall() {
 usage() {
 	echo -e "${cyan}Uso:${reset} $APP [opção]"
 	echo -e "${cyan}Opções:${reset}"
-	echo -e "  ${yellow}Sem opção        ${reset} mostra resumo do sistema"
+	echo -e "  ${yellow}-s, --show       ${reset} mostra resumo do sistema"
 	echo -e "  ${green}-i, --install${reset}     Aplica configurações"
 	echo -e "  ${red}-u, --uninstall${reset}   Remove configurações"
 	echo -e "  ${cyan}-h, --help${reset}        Mostra este ajuda"
@@ -998,6 +1000,9 @@ usage() {
 
 case "$1" in
 "")
+	warn "erro: nenhuma operação especificada (use -h para obter ajuda)"
+	;;
+-s | --show)
 	detect_init
 	detect_fs
 	detect_ram
@@ -1005,7 +1010,6 @@ case "$1" in
 	#calculate_swap
 	ensure_debugfs
 	summary
-	usage
 	;;
 -i|--install)
 	main
